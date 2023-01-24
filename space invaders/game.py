@@ -1,16 +1,16 @@
-#importing things
+#Imported items
 import random
 import time
 import turtle
 
-from turtle import *
-color('red', 'yellow')
-begin_fill()
+s = turtle.getscreen();
+t = turtle.Turtle();
+big1 = "images/big1.gif";
+big2 = "images/big2.gif";
+turtle.addshape(big1);
+turtle.addshape(big2);
 while True:
-    forward(200)
-    left(170)
-    if abs(pos()) < 1:
-        break
-end_fill()
-done()
-
+    t.shape(big1)
+    time.sleep(0.1);
+    t.shape(big2);
+    time.sleep(0.1);
