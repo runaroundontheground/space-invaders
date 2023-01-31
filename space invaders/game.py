@@ -78,7 +78,7 @@ def drawMenu():
     titleStyle[1] = 15;
     exit_pen.write("EXIT", font = titleStyle)
         
-
+"""
 #while gameState == "menu":
     #drawMenu();
 drawMenu();
@@ -91,7 +91,7 @@ while True:
     mouseX = canvas.winfo_pointerx();
     mouseY = canvas.winfo_pointery();
     testingT.setpos(int(mouseX - sW), int(-mouseY + (sH / 1.5)));
-    
+"""
 
 
 
