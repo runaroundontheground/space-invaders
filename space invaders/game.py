@@ -80,7 +80,7 @@ while True:
     mouseX = canvas.winfo_pointerx();
     mouseY = canvas.winfo_pointery();
     testingT.setpos(int(mouseX - sW), int(-mouseY + (sH / 1.5)));
-    #t.write("test", font = style);
+    
 
 
 
