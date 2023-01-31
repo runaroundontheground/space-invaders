@@ -36,7 +36,7 @@ class object:
 
 
 enemies = [];
-objects = [];
+destructibles = [];
 
 
 
