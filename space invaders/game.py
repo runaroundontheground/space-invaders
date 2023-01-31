@@ -38,6 +38,8 @@ class object:
         self.health = health;
         self.shape = shape;
         
+class player:
+    pass;
     #can't do size, can't do color (unless it's just a normal object)
 
 
