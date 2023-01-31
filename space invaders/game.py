@@ -24,9 +24,15 @@ t.hideturtle();
 
 
 gameState = "menu"; # can be "menu", "game", or "gameover"
-player = {
-    "thing": "nothing"
-};
+
+class object:
+    def __init__(self, x = 0.0, y = 0.0, size = 1.0, color = "black", health = 1.0):
+        self.x = x;
+        self.y = y;
+        self.size = size;
+        self.color = color;
+        self.health = health;
+    #can't do size, can't do color (unless it's just a normal object)
 
 
 enemies = [];
@@ -87,16 +93,17 @@ while gameState == "game":
     t.write("Press Start", font = style);
     time.sleep(0.01);
 
-border_pen.color=("black")
-border_pen.pensize=(5)
-border_pen.speed=(0)
-border_pen.penup
-border_pen.setpos(700,650)
-border_pen.pendown
-for side in range(4):
-    border_pen.fd(1400)
-    border_pen.lt(1300)
-border_pen.hideturtle()
+def drawBorder():
+    border_pen.color=("black")
+    border_pen.pensize=(5)
+    border_pen.speed=(0)
+    border_pen.penup
+    border_pen.setpos(700,650)
+    border_pen.pendown
+    for side in range(4):
+        border_pen.fd(1400)
+        border_pen.lt(1300)
+    border_pen.hideturtle()
 
 
 defining player
