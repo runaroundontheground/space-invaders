@@ -29,7 +29,7 @@ mainSetup();
 
 
 
-class object:
+class object(object):
     def __init__(self, x = 0.0, y = 0.0, size = 1.0, color = "black", health = 1.0, shape = big1):
         self.x = x;
         self.y = y;
@@ -38,8 +38,9 @@ class object:
         self.health = health;
         self.shape = shape;
         
-class player:
-    pass;
+class player(object):
+    def __init__(self, x, y, size, color, health, shape):
+        pass
     #can't do size, can't do color (unless it's just a normal object)
 
 
