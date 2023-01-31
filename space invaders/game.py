@@ -50,16 +50,10 @@ objects = [];
 players = [];
 players.append(player(25));
 print(players[0].x);
-"""
-#how to run things for all objects:
-for i in objects:
-    t.goto(objects[i].x, objects[i].h);#do whatever objects do
-    t.shape(objects[i].shape);
-print(objects)
 
-t.setpos(-100, 100);
 #menu things
-"""
+
+
 def drawMenu():
     titleT = t;
     titleStyle = style;
