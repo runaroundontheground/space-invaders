@@ -32,13 +32,16 @@ class object:
         self.size = size;
         self.color = color;
         self.health = health;
+        
     #can't do size, can't do color (unless it's just a normal object)
 
 
 enemies = [];
 objects = [];
 objects.append(object(40.0, 0));
-
+#how to run things for all objects:
+for i in objects:
+    t.goto(objects[i].x, objects[i].h);#do whatever objects do
 print(objects)
 
 t.setpos(-100, 100);
