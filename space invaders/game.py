@@ -36,10 +36,10 @@ class object:
 
 
 enemies = [];
-destructibles = [];
+objects = [];
+objects.append(object(40.0, 0));
 
-
-
+print(objects)
 
 t.setpos(-100, 100);
 #menu things
