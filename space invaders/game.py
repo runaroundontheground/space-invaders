@@ -41,12 +41,13 @@ class object(object):
 class player(object):
     def __init__(self, x, y, size, color, health, shape):
         super().__init__(x, y, size, color, health, shape);
-        self.x = 14;
+        self.subClass = "player";
     #can't do size, can't do color (unless it's just a normal object)
 
 
 enemies = [];
 objects = [];
+projectiles = [];
 players = [];
 players.append(player(25));
 print(players[0].x);
