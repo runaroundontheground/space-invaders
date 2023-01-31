@@ -3,27 +3,31 @@ import math
 import random
 import time
 import turtle
+
 #variables go here
-s = turtle.getscreen();
-t = turtle.Turtle();
-sW, sH = 1000, 800;
-s.setup(sW, sH);
 
-
-
-big1 = "images/biggreen1.gif";
-style = ["Press Start 2P", 14, 'normal'];
-t.fillcolor("green");
-t.pencolor("green");
-turtle.register_shape(big1);
-turtle.bgcolor("black");
-t.speed(0);
-t.penup();
-t.hideturtle();
-
-
-
+s, t = "";
+sW, sH = 0;
+big1, style = "";
 gameState = "menu"; # can be "menu", "game", or "gameover"
+def mainSetup():
+    s = turtle.getscreen();
+    t = turtle.Turtle();
+    sW, sH = 1000, 800;
+    s.setup(sW, sH);
+    big1 = "images/biggreen1.gif";
+    style = ["Press Start 2P", 14, 'normal'];
+    t.fillcolor("green");
+    t.pencolor("green");
+    turtle.register_shape(big1);
+    turtle.bgcolor("black");
+    t.speed(0);
+    t.penup();
+    t.hideturtle();
+mainSetup();
+
+
+
 
 class object:
     def __init__(self, x = 0.0, y = 0.0, size = 1.0, color = "black", health = 1.0, shape = big1):
@@ -39,7 +43,9 @@ class object:
 
 enemies = [];
 objects = [];
-objects.append(object(40.0, 0));
+
+
+"""
 #how to run things for all objects:
 for i in objects:
     t.goto(objects[i].x, objects[i].h);#do whatever objects do
@@ -48,7 +54,7 @@ print(objects)
 
 t.setpos(-100, 100);
 #menu things
-
+"""
 def drawMenu():
     titleT = t;
     titleStyle = style;
