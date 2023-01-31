@@ -40,7 +40,7 @@ class object(object):
         
 class player(object):
     def __init__(self, x, y, size, color, health, shape):
-        pass
+        super().__init__(x, y, size, color, health, shape);
     #can't do size, can't do color (unless it's just a normal object)
 
 
