@@ -2,25 +2,23 @@
 import math
 import random
 import time
-import turtle
+import pygame
 #variables go here
+Font = pygame.font.Font("PressStart2P.ttf", 64)
 
-s = turtle.getscreen();
-t = turtle.Turtle();
-mx, my, mD = 0, 0, False;
+from pygame.locals import (
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
+    K_ESCAPE,
+    KEYDOWN,
+    QUIT,
+)
+
 gameState = "menu"; # can be "menu", "game", or "gameover"
-sW, sH = 1000, 800;
-s.setup(sW, sH);
-big1 = "images/biggreen1.gif";
-playerImg = "images/player.gif";
-style = ["Press Start 2P", 14, 'normal'];
-t.fillcolor("green");
-t.pencolor("green");
-turtle.register_shape(big1);
-turtle.bgcolor("black");
-t.speed(0);
-t.penup();
-t.hideturtle();
+sW, sH = 800, 600;
+screen = pygame.display.set_mode((sW, sH));
 
 
 
@@ -29,54 +27,55 @@ t.hideturtle();
 
 
 
-
-
-class object(object):
-    def __init__(self, x = 0.0, y = 0.0, size = 1.0, color = "black", health = 1.0, shape = big1):
-        self.x = x;
-        self.y = y;
-        self.xv = 0;
-        self.yv = 0;
-        self.size = size;
-        self.color = color;
-        self.health = health;
-        self.shape = shape;
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Player, self).__init__()
+        self.surf = pygame.image.load("images/player.png").convert();
+        #self.surf.set_colorkey((255, 255, 255), RLEACCEL); whats this do
+        self.rect = self.surf.get_rect();
         
-class player(object):
-    def __init__(self, x = 0.0, y = 0.0, size = 1.0, color = "black", health = 1.0, shape = playerImg):
-        super().__init__(x, y, size, color, health, shape);
-        self.subClass = "player";
-    #can't do size, can't do color (unless it's just a normal object)
 
 
-enemies = [];
-objects = [];
-projectiles = [];
-players = [];
-players.append(player(25));
-print(players[0].x);
+
+    def update(self, Pkeys):
+        if Pkeys[K_UP]:
+            self.rect.move_ip(0, -5);
+        if Pkeys[K_DOWN]:
+            pass
+
+
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Enemy, self).__init__();
+        self.surf = pygame.image.load("images/big.png").convert();
+        #thing above again, fixes something?
+
+
+class BG(pygame.sprite.Sprite):
+    def __init__(self):
+        super(BG, self).__init__();
+        self.surf = pygame.image.load("images/bg.png").convert();
+        
+        
+           
+pygame.mixer.init();
+pygame.init();
+clock = pygame.time.Clock();
+
+
+
+
+
 
 #menu things
 
-def drawMenu():
-    titleT = t;
-    titleStyle = style;
-    titleStyle[1] = 30;
-    titleT.setpos(-280, 230);
-    titleT.color("limegreen");
-    titleT.write("SPACE INVADERS", font = titleStyle);
-    start_pen = t
-    start_pen.color("limegreen")
-    start_pen.setposition(-80, -80)
-    titleStyle[1] = 15;
-    start_pen.write("START", font = titleStyle)
-    exit_pen = t
-    exit_pen.color("limegreen")
-    exit_pen.setposition(-65, -160)
-    titleStyle[1] = 15;
-    exit_pen.write("EXIT", font = titleStyle)
-    thing = False;
+def menu():
+    menu_text = Font.render("SPACE INVADERS", True, (0, 255, 255))
+    screen.blit(menu_text, (190, 250))
+    
 
+while gameState == "menu":
+    menu()
 
 #input thingys
 def onClick(x = 0, y = 0):
@@ -87,54 +86,26 @@ def onClick(x = 0, y = 0):
         print("start clicked");
         #gameState = "game";
 
-def onRelease(x = 0, y = 0):
-    #mD = False;
-    print("mouse released");
-
-def onDrag(x = 0, y = 0):
-    pass
-
-
 def mouseMove(event):
     global mx, my, sW, sH
     mx, my = event.x, event.y;
     print(mx - (sW / 2));
     
 
-turtle.onscreenclick(onClick);
-turtle.onrelease(onRelease);
-turtle.ondrag(onDrag);
 
-canvas = turtle.getcanvas();
-canvas.bind("<Motion>", mouseMove);
+
 
 
 #this is where we call things, don't assign values / functions below here
 
-thing = True;
-while gameState == "menu":
-    drawMenu();
-
-    
 
 
-time.sleep(1);
 
 while gameState == "game":
-    testT = t
-    testStyle = style
-    testT.setpos(0, 0)
-    testT.color("Blue")
-    testT.write("Testing", font =testStyle)
-
+    pass
 
 #while gameState == "gameover":
-#    overT = t
-#    overStyle = style
-#    overStyle[1] = 30
-#    overT.setpos(-280, 230)
-#    overT.color("red")
-#    overT.write("GAME OVER", font = overStyle)
+#   pass
 
 
 
