@@ -67,7 +67,7 @@ def plrMove():
        if plr["xv"] > -mxspd:
         plr["xv"] -= spd;
 
-    if (not keys[pygame.K_d] and not keys[pygame.K_a]) or (keys[pygame.K_d] and keys):
+    if (not keys[pygame.K_d] and not keys[pygame.K_a]) or (keys[pygame.K_d] and keys[pygame.K_a]):
         plr["xv"] -= plr["xv"] / 5;
 
     if plr["x"] < 0:
@@ -87,7 +87,7 @@ def plrMove():
 bigImg = pygame.image.load(os.path.join("images", "big.png"))   
 bigW, bigH = 32, 32;
 big = pygame.transform.scale(bigImg, (bigW, bigH))
-bigRect = pygame.Rect(100, 100, bigW, bigH);     
+bigRect = pygame.Rect(100, 100, bigW, bigH);
 
 
 
@@ -97,7 +97,7 @@ def bCollision(pBul, eBul, plrRect, bigRect, smallRect): #still need to define e
 
 """
 
-
+#collision is already handled by pygame, don't do anything about it for now
 
 
 
