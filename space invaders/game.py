@@ -106,9 +106,9 @@ def alien1():
     alien1W, alien1H = 32, 32;
     alien1 = pygame.transform.scale(alien1Img, (alien1W, alien1H))
     while Alien1Count < 8:
-        alien1Rect = pygame.Rect(Alien1xPos, Alien1yPos, alien1W, alien1H);
-        alien1xpos += 3
-        Alien1Count += 1
+        #alien1Rect = pygame.Rect(Alien1xPos, Alien1yPos, alien1W, alien1H);
+        #alien1xpos += 3
+        #Alien1Count += 1
         if Alien1Count < 8:
             break
         
@@ -133,16 +133,16 @@ while plrAlive:
 
 #menu things
 def makeMenu():
-    menuText = {
+    menuText = [
         "0": {
             "text": font.render("Space Invaders", True, BLACK),
             "pos": (100, 100)
             },
         "1": {
-            "text":font.render("Start", False, BLACK),
+            "text": font.render("Start", False, BLACK),
             "pos": (296, 274)
-            }
-    };
+        }
+    ];
     
     text.append(menuText);
     
