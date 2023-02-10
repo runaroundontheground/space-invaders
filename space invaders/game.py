@@ -9,7 +9,8 @@ pygame.font.init();
 pygame.mixer.init();
 pygame.init();
 clock = pygame.time.Clock();
-font = pygame.font.Font("font/PressStart2P-Regular.ttf", 64)
+font = pygame.font.Font("font/PressStart2P-Regular.ttf", 32)
+#debugRect = pygame.Rect(); this'll do something later
 
 from pygame.locals import (
     K_UP,
