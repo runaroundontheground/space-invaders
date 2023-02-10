@@ -163,8 +163,6 @@ def makeMenu():
     menuText = [t1, t2]
     text.append(menuText);
     
-    
-    
 def menu():
     pass
     
