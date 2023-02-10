@@ -179,7 +179,7 @@ def menu():
 
 
 def screenThings():
-    screen.fill(GREEN) # reset window maybe
+    screen.fill(GREEN) # clears the stuff off the screen, disable this if you want to see something fun...
     # render things
     plr["x"] += plr["xv"];
     plr["y"] += plr["yv"];
