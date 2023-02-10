@@ -133,18 +133,18 @@ while plrAlive:
 
 #menu things
 def makeMenu():
-    menuText = [
-        "0": {
-            "text": font.render("Space Invaders", True, BLACK),
-            "pos": (100, 100)
-            },
-        "1": {
-            "text": font.render("Start", False, BLACK),
-            "pos": (296, 274)
-        }
-    ];
-    
+    t1 = {
+        "text": font.render("Space Invaders", False, BLACK),
+        "pos": (100, 100)
+    }
+    t2 = {
+    "text": font.render("Start", False, BLACK),
+    "pos": (296, 274)
+    }
+    menuText = [t1, t2]
     text.append(menuText);
+    
+    
     
 def menu():
     pass
