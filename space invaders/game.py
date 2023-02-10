@@ -64,11 +64,11 @@ def plrMove():
     global sW, sH, spd, pBul, bspd, mxspd;
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_d] and plr["x"] > 0: #go right
+    if keys[pygame.K_d] and plr["x"] > sW: #go right
         if plr["xv"] < mxspd:
             plr["xv"] += spd;
 
-    if keys[pygame.K_a] and plr["x"] + plrW  < sW: #go left
+    if keys[pygame.K_a] and plr["x"] < 0: #go left
        if plr["xv"] > -mxspd:
         plr["xv"] -= spd;
     
@@ -110,7 +110,6 @@ def plrMove():
     if pBul.y > 0: #if bullet y is not off top of screen
         pBul.y += bspd
     #else
-
 
 Alien1Count = 0;
 Alien1xpos =100;
