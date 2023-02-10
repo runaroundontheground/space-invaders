@@ -64,11 +64,11 @@ def plrMove():
     global sW, sH, spd, pBul, bspd, mxspd;
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_d] and plr["x"] > sW: #go right
+    if keys[pygame.K_d] and plr["x"] < sW: #go right
         if plr["xv"] < mxspd:
             plr["xv"] += spd;
 
-    if keys[pygame.K_a] and plr["x"] < 0: #go left
+    if keys[pygame.K_a] and plr["x"] > -plrW: #go left
        if plr["xv"] > -mxspd:
         plr["xv"] -= spd;
     
@@ -81,30 +81,32 @@ def plrMove():
             plr["yv"] += spd;
 
 
-    if (not keys[pygame.K_d] and not keys[pygame.K_a]) or (keys[pygame.K_d] and keys[pygame.K_a]):
+    if (not keys[pygame.K_d] and not keys[pygame.K_a]) or (keys[pygame.K_d] and keys[pygame.K_a]) or abs(plr["xv"]) > mxspd:
         plr["xv"] -= plr["xv"] / 5;
-    if (not keys[pygame.K_w] and not keys[pygame.K_s]) or (keys[pygame.K_w] and keys[pygame.K_s]):
+    if (not keys[pygame.K_w] and not keys[pygame.K_s]) or (keys[pygame.K_w] and keys[pygame.K_s]) or abs(plr["yv"]) > mxspd:
         plr["yv"] -= plr["yv"] / 5;
 
     if plr["x"] < 0: # push player outta the left edge of the screen
-        plr["x"] += 1
-        plr["xv"] = 0.0;
+        plr["x"] += 1.0;
+        # IDEA!!!!: player loops around the screen, go off edge and you come out the other side
+        plr["xv"] = 12.0; # player go bounce
         
-    if plr["x"] > sW: # push player outta the right edge of the screen
-        plr["x"] -= 1
-        plr["xv"] = 0.0;
+    if plr["x"] > sW - plrW: # push player outta the right edge of the screen
+        plr["x"] -= 1.0;
+        plr["xv"] = -12.0;
         
-    if plr["y"] > sH - plrW: # push player outta the bottom edge of the screen
-        plr["y"] -= 1;
+    if plr["y"] > sH - plrH: # push player outta the bottom edge of the screen
+        plr["y"] -= 0.1;
         plr["yv"] = 0.0;
     
     if plr["y"] < sH - 50: # push player outta the top limit of ur movement
-        plr["y"] += 1;
+        plr["y"] += 0.1;
         plr["yv"] = 0.0;
         
     if keys[pygame.K_SPACE] and len(plrBul) < maxBullets: #shoot a bullet if there's not a playr bullet alread on screen
         #pBul = pygame.Rect(plrRect.x + plrW, plr.y + plrH/2 -2, 10, 5) 
-        pBul.append(plrBul)
+        #pBul.append(plrBul)
+        pass
     
     
     if pBul.y > 0: #if bullet y is not off top of screen
