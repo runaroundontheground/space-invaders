@@ -131,16 +131,18 @@ while plrAlive:
 
 
 
-#menu things
+# create the menu's text
 def makeMenu():
     t1 = {
         "text": font.render("Space Invaders", False, BLACK),
-        "pos": (100, 100)
+        "pos": [100, 100] #middle of screen, 100 y down
     }
+    t1["pos"][0] = sW / 2 - t1["text"].get_width() / 2;
     t2 = {
     "text": font.render("Start", False, BLACK),
-    "pos": (296, 274)
+    "pos": [296, 274]
     }
+    t2["pos"][0] = sW / 2 - t2["text"].get_width() / 2;
     menuText = [t1, t2]
     text.append(menuText);
     
