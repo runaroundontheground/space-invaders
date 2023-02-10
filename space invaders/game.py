@@ -71,7 +71,7 @@ def plrMove():
     if keys[pygame.K_a] and plr["x"] + plrW  < sW: #go left
        if plr["xv"] > -mxspd:
         plr["xv"] -= spd;
-    screen.blit(plrImg, (round(sW / 2), round(sH - 100)));
+    
     if keys[pygame.K_w] and plr["y"] > sH - 50: # go up
         if plr["yv"] > -mxspd:
             plr["yv"] -= spd;
