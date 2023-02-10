@@ -168,10 +168,9 @@ def screenThings():
     plr["y"] += plr["yv"];
     screen.blit(plrImg, (round(plr["x"]), round(plr["y"])));
     
-    i = 0;
-    while i < len(text):
-        screen.blit(text[i][str(i)]["text"], text[i][str(i)]["pos"])
-        i += 1;
+    for i in text:
+        for i in i:
+            screen.blit(i["text"], i["pos"])
     
     # show mouse position
     mpos1 = font.render(str(pygame.mouse.get_pos()[0]) + " " + str(pygame.mouse.get_pos()[1]), False, BLUE)
