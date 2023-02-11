@@ -26,6 +26,14 @@ gameState = "menu"; # can be "menu", "game", or "gameover"
 sW, sH = 800, 600;
 screen = pygame.display.set_mode((sW, sH));
 
+
+class obj:
+    def __init__(self, x, y, hp, color):
+            self.x = x;
+            self.y = y;
+            self.hp = hp;
+            self.color = color;
+
 #Colors
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
