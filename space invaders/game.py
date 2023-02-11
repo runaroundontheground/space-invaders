@@ -20,7 +20,7 @@ from pygame.locals import (
     K_ESCAPE,
     KEYDOWN,
     QUIT,
-)
+) # import key input stuff
 
 gameState = "menu"; # can be "menu", "game", or "gameover"
 sW, sH = 800, 600;
