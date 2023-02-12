@@ -42,11 +42,12 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+BGCOLOR = BLACK;
 FPS = 60;
 
 gameState = "menu"; # can be "menu", "game", or "gameover"
-gameLoadState = True;
-sW, sH = 800, 600;
+
+sW, sH = 600, 600;
 screen = pygame.display.set_mode((sW, sH));
 mouseD = False;
 mx, my = 0, 0;
@@ -56,34 +57,50 @@ players = []; # multiplayer, if we have time
 enemies = [];
 text = [];
 
-PLAYERSHIP = pygame.image.load(hP + "images/player.png");
-PLRBULLET = pygame.image.load(hP + "images/player bullet.png");
-ALIEN1 = pygame.image.load(hP + "images/alien1.png");
+PLAYERSHIP = [pygame.image.load(hP + "images/player.png")];
+PLRBULLET = [pygame.image.load(hP + "images/player bullet.png")];
+ALIEN1 = [pygame.image.load(hP + "images/alien1-1.png"), pygame.image.load(hP + "images/alien1-2.png")];
 #ALIEN2 = pygame.image.load(os.path.join("images", "alien2.png"))
-BLANK = pygame.image.load(hP + "images/blank.png");
+ALIENDIE = pygame.image.load(hP + "images/alien death.png");
+
+BLANK = [pygame.image.load(hP + "images/blank.png")];
 
 
 
 class obj:
     
-    def __init__(self, x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w = 32, h = 32):
+    def __init__(self, x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 32, h = 32, anim = False):
         
-            self.x = x;
-            self.y = y;
-            self.xv = 0.0;
-            self.yv = 0.0;
-            self.hp = hp;
-            self.color = color;
+        self.x = x;
+        self.y = y;
+        self.xv = 0.0;
+        self.yv = 0.0;
+        self.hp = hp;
+        self.color = color;
+        self.w = w;
+        self.h = h;
+        self.dieDelay = 0;
+        if anim:
             self.img = img;
-            self.w = w;
-            self.h = h;
-            self.rect = pygame.rect.Rect(self.x, self.y, self.w, self.h);
+            for i in img:
+                self.img[i] = pygame.transform.scale(self.img[i], (self.w, self.h));
+                self.img[i].fill(self.color, special_flags = pygame.BLENDMODE_BLEND);
+        else:
+            self.img = img[0];
             self.img = pygame.transform.scale(self.img, (self.w, self.h));
             self.img.fill(self.color, special_flags = pygame.BLENDMODE_BLEND);
-            def destroy():
-                del();
+        
+        self.rect = pygame.rect.Rect(self.x, self.y, self.w, self.h);
+        
+    def deathAnim(self):
+        self.img = ALIENDIE;
+        self.img = pygame.transform.scale(self.img, (self.w + (self.w / 3), self.h));
+        self.x -= 3;
+        self.dieDelay = 20;
+            
+            
 
-def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color = BLACK):
+def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color = GREEN):
     
     global text;
     n = obj(x, y, color);
@@ -101,7 +118,7 @@ def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color 
     text.append(n);
     
 
-def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w = 40, h = 32):
+def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 32, h = 32):
     
     global enemies;
     n = obj(x, y, hp, color, img, w, h);
@@ -109,7 +126,19 @@ def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w 
     
     enemies.append(n);
 
-def createProj(x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w = 3, h = 16, dmgT = "plr", yv = -5):
+def createEnemyRow(x = 15, y = 15, count = 8, img = BLANK):
+    
+    i = 0;
+    
+    while i < count:
+        createEnemy(x, y, img = img);
+        x += 32;
+        i += 1;
+        
+
+
+
+def createProj(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 3, h = 16, dmgT = "plr", yv = -5):
     
     global projectiles;
     n = obj(x, y , hp, color, img, w, h);
@@ -123,14 +152,13 @@ def createProj(x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w =
 
 
 
-createEnemy(img = ALIEN1)
+createEnemyRow(img = ALIEN1)
 
-plr = obj(sW / 2 - 32, sH - 32, 1.0, BLACK, PLAYERSHIP, 32, 32);
-plr.img = pygame.transform.scale(plr.img, (plr.w, plr.h));
+plr = obj(sW / 2 - 32, sH - 32, 1.0, GREEN, PLAYERSHIP, 32, 32);
 plr.shootDel = 0;
 
-spd = 1; #speed for player
-mxspd = 3; #player max speed
+spd = sW / 600; #speed for player
+mxspd = sW / 200; #player max speed
 bspd = 10; #projectile speed
 espd = 3; #enemy speed
 maxBullets = 1;
@@ -172,13 +200,13 @@ def plrInput():
         plr.yv -= plr.yv / 5;
 
     if plr.x < 0: # push player outta the left edge of the screen
-        plr.x = 3;
+        plr.x = 0;
         # IDEA!!!!: player loops around the screen, go off edge and you come out the other side
-        plr.xv = 12.0; # player go bounce
+        plr.xv = 0.0; # player go bounce
         
     if plr.x > sW - plr.w: # push player outta the right edge of the screen
-        plr.x -= 1.0;
-        plr.xv = -12.0;
+        plr.x = sW - plr.w;
+        plr.xv = 0.0;
         
     if plr.y > sH - plr.h: # push player outta the bottom edge of the screen
         plr.y = sH - plr.h;
@@ -213,6 +241,8 @@ def plrFrame():
     plr.rect.x = plr.x;
     plr.rect.y = plr.y;
     
+    #pygame.draw.line(screen, RED, (plr.x, plr.y), (0, 0), 30); trying to make a laser for aim assistance
+    
     plrInput();
     if plr.shootDel > 0:
         plr.shootDel -= 1;
@@ -226,6 +256,14 @@ def enemyFrame(self):
     
     self.rect.x = self.x;
     self.rect.y = self.y;
+    if self.dieDelay > 1:
+        self.dieDelay -= 1;
+        if self.dieDelay == 1:
+            enemies.remove(self);
+    for i in projectiles:
+        if pygame.Rect.collidepoint(self.rect, (i.x, i.y)) and self.dieDelay == 0:
+            self.deathAnim();
+            projectiles.remove(i);
     
     # other things gonna happen here
 
@@ -242,7 +280,7 @@ def projFrame(self):
         projectiles.remove(self);
     
 def textFrame(self):
-    screen.fill(WHITE, self.rect)
+    
     if pygame.Rect.collidepoint(self.rect, (mx, my)) and self.text == "Start" and mouseD:
         setupGame();
         
@@ -260,10 +298,30 @@ def menu():
         pass#if mx >
     
 def setupGame():
-    global text, gameState, gameLoadState;
-    gameState = "game";
-    gameLoadState = True;
+    global text, gameState;
     text = [];
+    
+    
+    i = 3;
+    while i > 0:
+        screen.fill(BGCOLOR);
+        createText(str(i), y = sH / 2 - 20);
+        screen.blit(text[0].img, (text[0].x, text[0].y));
+        pygame.display.update();
+        time.sleep(0.5);
+        text = [];
+        
+        i -= 1;
+    screen.fill(BGCOLOR);
+    createText("Start!", y = sH / 2 - 20)
+    screen.blit(text[0].img, (text[0].x, text[0].y))
+    pygame.display.update();
+    time.sleep(0.5);
+    text = [];
+    
+    
+    
+    gameState = "game";
     
     
 
@@ -277,7 +335,7 @@ def setupGame():
 
 
 def screenThings():
-    screen.fill(GREEN) # clears the stuff off the screen, disable this if you want to see something fun...
+    screen.fill(BGCOLOR) # clears the stuff off the screen, disable this if you want to see something fun...
     # render things
     
     
@@ -296,7 +354,7 @@ def screenThings():
     mpos1W = int(mpos1.get_size()[0] / 4);
     mpos1H = int(mpos1.get_size()[1] / 4);
     mpos1 = pygame.transform.scale(mpos1, (mpos1W, mpos1H))
-    screen.blit(mpos1, (pygame.mouse.get_pos()[0] + 30, pygame.mouse.get_pos()[1]))
+    screen.blit(mpos1, (mx + 30, my))
     pygame.display.flip();
     
 
@@ -319,7 +377,17 @@ def game():
 makeMenu();
 
 pygame.display.set_caption("space invaders go weeee");
+
+
+
+
+
+
+
+
+
 running = True;
+
 while running:
     
     screenThings();
