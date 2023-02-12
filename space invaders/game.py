@@ -5,34 +5,38 @@ import time
 import pygame
 import os
 #variables go here
-pygame.font.init();
-pygame.mixer.init();
-pygame.init();
-clock = pygame.time.Clock();
-font = pygame.font.Font("fonts/PressStart2P-Regular.ttf", 32)
-#debugRect = pygame.Rect(); this'll do something later
-
-from pygame.locals import (
+def setup(): #make the game ready
+    
+    pygame.font.init();
+    pygame.mixer.init();
+    pygame.init();
+    
+    
+    
+    #debugRect = pygame.Rect(); this'll do something later
+    
+    from pygame.locals import (
     K_UP,
     K_DOWN,
     K_LEFT,
     K_RIGHT,
     K_ESCAPE,
     KEYDOWN,
-    QUIT,
-) # import key input stuff
+    QUIT
+    )
 
-gameState = "menu"; # can be "menu", "game", or "gameover"
-sW, sH = 800, 600;
-screen = pygame.display.set_mode((sW, sH));
+setup();
 
+hPT = os.path.exists("D:/programming stuff/") #home path test
+if hPT:
+    hP = "D:/programming stuff/space invaders/";
+else:
+    hP = "";
 
-class obj:
-    def __init__(self, x, y, hp, color):
-            self.x = x;
-            self.y = y;
-            self.hp = hp;
-            self.color = color;
+# get which path to use cuz programming at home is diff
+clock = pygame.time.Clock();
+font = pygame.font.Font(hP + "fonts/PressStart2P-Regular.ttf", 32)
+
 
 #Colors
 RED = (255, 0, 0)
@@ -42,77 +46,121 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 FPS = 60;
 
-PLAYERSHIP = pygame.image.load(os.path.join("images", "player.png"));
-ALIEN1 = pygame.image.load(os.path.join("images", "alien1.png"))
+gameState = "menu"; # can be "menu", "game", or "gameover"
+sW, sH = 800, 600;
+screen = pygame.display.set_mode((sW, sH));
+
+projectiles = [];
+text = [];
+enemies = [];
+
+
+PLAYERSHIP = pygame.image.load(hP + "images/player.png");
+ALIEN1 = pygame.image.load(hP + "images/alien1.png");
 #ALIEN2 = pygame.image.load(os.path.join("images", "alien2.png"))
+BLANK = pygame.image.load(hP + "images/blank.png");
+
+
+
+class obj:
+    
+    def __init__(self, x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w = 32, h = 32):
+        
+            self.x = x;
+            self.y = y;
+            self.xv = 0.0;
+            self.yv = 0.0;
+            self.hp = hp;
+            self.color = color;
+            self.img = img;
+            self.w = w;
+            self.h = h;
+            pygame.transform.scale(self.img, (self.w, self.h));
+            def destroy():
+                pass
+
+def createEnemy(x = None, y = None, hp = None, color = None, img = BLANK, w = 32, h = 32):
+    global enemies;
+    n = obj(x, y, hp, color, img, w, h);
+    n.img = pygame.transform.scale(n.img, (n.w, n.h));
+    enemies.append(n);
+
+def createProjectile(x = None, y = None, hp = None, color = None, img = BLANK, w = 32, h = 32):
+    global projectiles;
+    n = obj(x, y , hp, color, img, w, h);
+    n.img = pygame.transform.scale(n.img, (n.w, n.h));
+    projectiles.append(n);
+
+
+
+
+
+
+createEnemy(img = ALIEN1)
+
+plr = obj(sW / 2 - 32, sH - 32, 1.0, BLACK, PLAYERSHIP, 32, 32);
+plr.img = pygame.transform.scale(plr.img, (plr.w, plr.h));
+
 spd = 1; #speed for player
 mxspd = 3; #player max speed
 bspd = 10; #projectile speed
 espd = 3; #enemy speed
 maxBullets = 1;
-plrBul = [];
-text = [];
-#images
-plrW, plrH = 32, 32;
-plrImg = PLAYERSHIP;
-plrImg = pygame.transform.scale(plrImg, (plrW, plrH));
-plrRect = pygame.Rect(200, 200, plrW, plrH);
-plr = {
-    "x": (sW / 2) - plrW,
-    "y": sH - plrH,
-    "xv": 0.0,
-    "yv": 0.0
-    };
-pBul = pygame.Rect(round(plr["x"]), round(plr["y"]), 5, 5);
 
-plr["xv"] = 1;
+
+
+
+plrRect = pygame.Rect(200, 200, plr.w, plr.h);
+pBul = pygame.Rect(round(plr.x), round(plr.y), 5, 5);
+
+
 
 def plrMove():
     #player movement
     global sW, sH, spd, pBul, bspd, mxspd;
     keys = pygame.key.get_pressed()
 
-    if keys[pygame.K_d] and plr["x"] < sW: #go right
-        if plr["xv"] < mxspd:
-            plr["xv"] += spd;
+    if keys[pygame.K_d] and plr.x < sW: #go right
+        if plr.xv < mxspd:
+            plr.xv += spd;
 
-    if keys[pygame.K_a] and plr["x"] > -plrW: #go left
-       if plr["xv"] > -mxspd:
-        plr["xv"] -= spd;
+    if keys[pygame.K_a] and plr.x > -plr.w: #go left
+       if plr.xv > -mxspd:
+        plr.xv -= spd;
     
-    if keys[pygame.K_w] and plr["y"] > sH - 50: # go up
-        if plr["yv"] > -mxspd:
-            plr["yv"] -= spd;
+    if keys[pygame.K_w] and plr.y > sH - 50: # go up
+        if plr.yv > -mxspd:
+            plr.yv -= spd;
             
-    if keys[pygame.K_s] and plr["y"] < sH - plrH: # go down
-        if plr["yv"] < mxspd:
-            plr["yv"] += spd;
+    if keys[pygame.K_s] and plr.y < sH - plr.h: # go down
+        if plr.yv < mxspd:
+            plr.yv += spd;
 
 
-    if (not keys[pygame.K_d] and not keys[pygame.K_a]) or (keys[pygame.K_d] and keys[pygame.K_a]) or abs(plr["xv"]) > mxspd:
-        plr["xv"] -= plr["xv"] / 5;
-    if (not keys[pygame.K_w] and not keys[pygame.K_s]) or (keys[pygame.K_w] and keys[pygame.K_s]) or abs(plr["yv"]) > mxspd:
-        plr["yv"] -= plr["yv"] / 5;
+    if (not keys[pygame.K_d] and not keys[pygame.K_a]) or (keys[pygame.K_d] and keys[pygame.K_a]) or abs(plr.xv) > mxspd:
+        plr.xv -= plr.xv / 5;
+    if (not keys[pygame.K_w] and not keys[pygame.K_s]) or (keys[pygame.K_w] and keys[pygame.K_s]) or abs(plr.yv) > mxspd:
+        plr.yv -= plr.yv / 5;
 
-    if plr["x"] < 0: # push player outta the left edge of the screen
-        plr["x"] += 1.0;
+    if plr.x < 0: # push player outta the left edge of the screen
+        plr.x += 1.0;
         # IDEA!!!!: player loops around the screen, go off edge and you come out the other side
-        plr["xv"] = 12.0; # player go bounce
+        plr.xv = 12.0; # player go bounce
         
-    if plr["x"] > sW - plrW: # push player outta the right edge of the screen
-        plr["x"] -= 1.0;
-        plr["xv"] = -12.0;
+    if plr.x > sW - plr.w: # push player outta the right edge of the screen
+        plr.x -= 1.0;
+        plr.xv = -12.0;
         
-    if plr["y"] > sH - plrH: # push player outta the bottom edge of the screen
-        plr["y"] -= 0.1;
-        plr["yv"] = 0.0;
+    if plr.y > sH - plr.h: # push player outta the bottom edge of the screen
+        plr.y -= 0.1;
+        plr.yv = 0.0;
     
-    if plr["y"] < sH - 50: # push player outta the top limit of ur movement
-        plr["y"] += 0.1;
-        plr["yv"] = 0.0;
+    if plr.y < sH - 50: # push player outta the top limit of ur movement
+        plr.y += 0.1;
+        plr.yv = 0.0;
         
-    if keys[pygame.K_SPACE] and len(plrBul) < maxBullets: #shoot a bullet if there's not a playr bullet alread on screen
-        #pBul = pygame.Rect(plrRect.x + plrW, plr.y + plrH/2 -2, 10, 5) 
+    if keys[pygame.K_SPACE] and len(projectiles) < maxBullets: #shoot a bullet if there's not a playr bullet alread on screen
+        #pBul = pygame.Rect(plrRect.x + plr.w, plr.y + plr.h/2 -2, 10, 5) 
         #pBul.append(plrBul)
         pass
     
@@ -189,9 +237,9 @@ def menu():
 def screenThings():
     screen.fill(GREEN) # clears the stuff off the screen, disable this if you want to see something fun...
     # render things
-    plr["x"] += plr["xv"];
-    plr["y"] += plr["yv"];
-    screen.blit(plrImg, (round(plr["x"]), round(plr["y"])));
+    plr.x += plr.xv;
+    plr.y += plr.yv;
+    screen.blit(plr.img, (round(plr.x), round(plr.y)));
     
     for i in text:
         for i in i:
@@ -230,22 +278,8 @@ while running:
         pass
     
 pygame.quit();
-#while gameState == "gameover":
-#   pass
 
 
 
 
-'''
-def main_menu():
-    title_font = Font
-    run = True
-    while run:
-        screen.blit(BLACK, (0,0))
-        title_text = title_font.render("Click to Begin", 1, GREEN)
-        screen.blit(title_text, (sW/2 - title_text.get_width()/2, 350))
-        pygame.display.update()
-        for event in pygame.event.get():
 
-
-'''
