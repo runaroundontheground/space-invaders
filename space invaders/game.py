@@ -50,9 +50,9 @@ sW, sH = 800, 600;
 screen = pygame.display.set_mode((sW, sH));
 
 projectiles = [];
-text = [];
+players = []; # multiplayer, if we have time
 enemies = [];
-
+text = [];
 
 PLAYERSHIP = pygame.image.load(hP + "images/player.png");
 ALIEN1 = pygame.image.load(hP + "images/alien1.png");
@@ -78,13 +78,13 @@ class obj:
             def destroy():
                 pass
 
-def createEnemy(x = None, y = None, hp = None, color = None, img = BLANK, w = 32, h = 32):
+def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w = 40, h = 32):
     global enemies;
     n = obj(x, y, hp, color, img, w, h);
     n.img = pygame.transform.scale(n.img, (n.w, n.h));
     enemies.append(n);
 
-def createProjectile(x = None, y = None, hp = None, color = None, img = BLANK, w = 32, h = 32):
+def createProjectile(x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w = 32, h = 32):
     global projectiles;
     n = obj(x, y , hp, color, img, w, h);
     n.img = pygame.transform.scale(n.img, (n.w, n.h));
@@ -115,6 +115,7 @@ pBul = pygame.Rect(round(plr.x), round(plr.y), 5, 5);
 
 
 def plrMove():
+    
     #player movement
     global sW, sH, spd, pBul, bspd, mxspd;
     keys = pygame.key.get_pressed()
@@ -168,36 +169,22 @@ def plrMove():
         pBul.y += bspd
     #else
 
-Alien1Count = 0;
-Alien1xpos =100;
-Alien1ypos = 100;
 
-def alien1():
-    
-    alien1Img = ALIEN1; 
-    alien1W, alien1H = 32, 32;
-    alien1 = pygame.transform.scale(alien1Img, (alien1W, alien1H))
-    while Alien1Count < 8:
-        #alien1Rect = pygame.Rect(Alien1xPos, Alien1yPos, alien1W, alien1H);
-        #alien1xpos += 3
-        #Alien1Count += 1
-        if Alien1Count < 8:
-            break
         
     
-"""
-plrAlive = True
-while plrAlive:
-    while alien1xpos < 790:
-        clock.tick(FPS);
-        alien1xpos += 6
-    while alien1xPos > 10:
-        clock.tick(FPS);
-        alien1xpos -= 6
-
-"""
+def plrFrame():
+    
+    plr.x += plr.xv;
+    plr.y += plr.yv;
+    plrMove();
 
 
+
+def enemyFrame(self):
+    
+    self.x += self.xv;
+    self.y += self.yv;
+    # other things gonna happen here
 
 #collision is already handled by pygame, don't do anything about it for now
 
@@ -236,14 +223,19 @@ def menu():
 def screenThings():
     screen.fill(GREEN) # clears the stuff off the screen, disable this if you want to see something fun...
     # render things
-    plr.x += plr.xv;
-    plr.y += plr.yv;
+    
     screen.blit(plr.img, (round(plr.x), round(plr.y)));
     
     for i in text:
         for i in i:
             screen.blit(i["text"], i["pos"])
     
+    for i in enemies:
+        enemyFrame(i);
+        screen.blit(i.img, (round(i.x),  round(i.y)));
+        
+        
+        
     # show mouse position
     mpos1 = font.render(str(pygame.mouse.get_pos()[0]) + " " + str(pygame.mouse.get_pos()[1]), False, BLUE)
     mpos1W = int(mpos1.get_size()[0] / 6);
@@ -263,9 +255,14 @@ print(len(text));
 pygame.display.set_caption("Frijoles Con Limon");
 running = True;
 while running:
+    
     screenThings();
-    plrMove();
     clock.tick(FPS);
+    
+    plrFrame();
+    
+    
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False;
