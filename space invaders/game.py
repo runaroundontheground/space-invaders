@@ -5,27 +5,26 @@ import time
 import pygame
 import os
 #variables go here
-def setup(): #make the game ready
     
-    pygame.font.init();
-    pygame.mixer.init();
-    pygame.init();
-    
-    
-    
-    #debugRect = pygame.Rect(); this'll do something later
-    
-    from pygame.locals import (
-    K_UP,
-    K_DOWN,
-    K_LEFT,
-    K_RIGHT,
-    K_ESCAPE,
-    KEYDOWN,
-    QUIT
-    )
+pygame.font.init();
+pygame.mixer.init();
+pygame.init();
 
-setup();
+
+
+#debugRect = pygame.Rect(); this'll do something later
+
+from pygame.locals import (
+K_UP,
+K_DOWN,
+K_LEFT,
+K_RIGHT,
+K_ESCAPE,
+K_SPACE,
+KEYDOWN,
+QUIT
+)
+
 
 if os.path.exists("D:/programming stuff/"):
     hP = "D:/programming stuff/space invaders/";
@@ -46,8 +45,11 @@ BLACK = (0, 0, 0)
 FPS = 60;
 
 gameState = "menu"; # can be "menu", "game", or "gameover"
+gameLoadState = True;
 sW, sH = 800, 600;
 screen = pygame.display.set_mode((sW, sH));
+mouseD = False;
+mx, my = 0, 0;
 
 projectiles = [];
 players = []; # multiplayer, if we have time
@@ -55,6 +57,7 @@ enemies = [];
 text = [];
 
 PLAYERSHIP = pygame.image.load(hP + "images/player.png");
+PLRBULLET = pygame.image.load(hP + "images/player bullet.png");
 ALIEN1 = pygame.image.load(hP + "images/alien1.png");
 #ALIEN2 = pygame.image.load(os.path.join("images", "alien2.png"))
 BLANK = pygame.image.load(hP + "images/blank.png");
@@ -74,20 +77,45 @@ class obj:
             self.img = img;
             self.w = w;
             self.h = h;
-            pygame.transform.scale(self.img, (self.w, self.h));
+            self.rect = pygame.rect.Rect(self.x, self.y, self.w, self.h);
+            self.img = pygame.transform.scale(self.img, (self.w, self.h));
+            self.img.fill(self.color, special_flags = pygame.BLENDMODE_BLEND);
             def destroy():
-                pass
+                del();
+
+def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color = BLACK):
+    
+    global text;
+    n = obj(x, y, color);
+    n.img = font.render(textVal, False, n.color);
+    n.text = textVal;
+    n.w, n.h = font.size(textVal);
+    
+    if centered:
+        n.x -= n.w / 2;
+    
+    n.rect.x = n.x;
+    n.rect.w, n.rect.h = n.w, n.h;
+    
+    
+    text.append(n);
+    
 
 def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w = 40, h = 32):
+    
     global enemies;
     n = obj(x, y, hp, color, img, w, h);
-    n.img = pygame.transform.scale(n.img, (n.w, n.h));
+    
+    
     enemies.append(n);
 
-def createProjectile(x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w = 32, h = 32):
+def createProj(x = sW / 2, y = sH / 2, hp = 1.0, color = BLACK, img = BLANK, w = 3, h = 16, dmgT = "plr", yv = -5):
+    
     global projectiles;
     n = obj(x, y , hp, color, img, w, h);
-    n.img = pygame.transform.scale(n.img, (n.w, n.h));
+    n.dmgT = dmgT;
+    n.yv = yv;
+    
     projectiles.append(n);
 
 
@@ -99,6 +127,7 @@ createEnemy(img = ALIEN1)
 
 plr = obj(sW / 2 - 32, sH - 32, 1.0, BLACK, PLAYERSHIP, 32, 32);
 plr.img = pygame.transform.scale(plr.img, (plr.w, plr.h));
+plr.shootDel = 0;
 
 spd = 1; #speed for player
 mxspd = 3; #player max speed
@@ -114,11 +143,11 @@ pBul = pygame.Rect(round(plr.x), round(plr.y), 5, 5);
 
 
 
-def plrMove():
+def plrInput():
     
     #player movement
     global sW, sH, spd, pBul, bspd, mxspd;
-    keys = pygame.key.get_pressed()
+    keys = pygame.key.get_pressed();
 
     if keys[pygame.K_d] and plr.x < sW: #go right
         if plr.xv < mxspd:
@@ -143,7 +172,7 @@ def plrMove():
         plr.yv -= plr.yv / 5;
 
     if plr.x < 0: # push player outta the left edge of the screen
-        plr.x += 1.0;
+        plr.x = 3;
         # IDEA!!!!: player loops around the screen, go off edge and you come out the other side
         plr.xv = 12.0; # player go bounce
         
@@ -152,22 +181,26 @@ def plrMove():
         plr.xv = -12.0;
         
     if plr.y > sH - plr.h: # push player outta the bottom edge of the screen
-        plr.y -= 0.1;
+        plr.y = sH - plr.h;
         plr.yv = 0.0;
     
     if plr.y < sH - 50: # push player outta the top limit of ur movement
-        plr.y += 0.1;
+        plr.y = sH - 50;
         plr.yv = 0.0;
         
-    if keys[pygame.K_SPACE] and len(projectiles) < maxBullets: #shoot a bullet if there's not a playr bullet alread on screen
-        #pBul = pygame.Rect(plrRect.x + plr.w, plr.y + plr.h/2 -2, 10, 5) 
-        #pBul.append(plrBul)
-        pass
+    if (keys[pygame.K_SPACE] or mouseD) and plr.shootDel == 0: #shoot a bullet if there's not a playr bullet alread on screen
+        
+        createProj(plr.x + plr.w/2 - 2.5, plr.y, img = PLRBULLET, dmgT = "plr", yv = -10, color = WHITE);
+        
+        plr.shootDel = 50;
+
+
+    
+   
+   
+   
     
     
-    if pBul.y > 0: #if bullet y is not off top of screen
-        pBul.y += bspd
-    #else
 
 
         
@@ -176,7 +209,13 @@ def plrFrame():
     
     plr.x += plr.xv;
     plr.y += plr.yv;
-    plrMove();
+    
+    plr.rect.x = plr.x;
+    plr.rect.y = plr.y;
+    
+    plrInput();
+    if plr.shootDel > 0:
+        plr.shootDel -= 1;
 
 
 
@@ -184,30 +223,47 @@ def enemyFrame(self):
     
     self.x += self.xv;
     self.y += self.yv;
+    
+    self.rect.x = self.x;
+    self.rect.y = self.y;
+    
     # other things gonna happen here
 
-#collision is already handled by pygame, don't do anything about it for now
+# collision is already handled by pygame, don't do anything about it for now
 
-
+def projFrame(self):
+    
+    self.x += self.xv;
+    self.y += self.yv;
+    
+    self.rect.x = self.x;
+    self.rect.y = self.y;
+    if self.y < 0:
+        projectiles.remove(self);
+    
+def textFrame(self):
+    screen.fill(WHITE, self.rect)
+    if pygame.Rect.collidepoint(self.rect, (mx, my)) and self.text == "Start" and mouseD:
+        setupGame();
+        
+        
 
 # create the menu's text
 def makeMenu():
-    t1 = {
-        "text": font.render("Space Invaders", False, BLACK),
-        "pos": [100, 100] #middle of screen, 100 y down
-    }
-    t1["pos"][0] = sW / 2 - t1["text"].get_width() / 2;
-    t2 = {
-    "text": font.render("Start", False, BLACK),
-    "pos": [296, 274]
-    }
-    t2["pos"][0] = sW / 2 - t2["text"].get_width() / 2;
-    menuText = [t1, t2]
-    text.append(menuText);
+    
+    createText("Space Invaders", y = 100);
+    createText("Start", y = 274);
+    
     
 def menu():
-    pass
+    if mouseD:
+        pass#if mx >
     
+def setupGame():
+    global text, gameState, gameLoadState;
+    gameState = "game";
+    gameLoadState = True;
+    text = [];
     
     
 
@@ -224,55 +280,73 @@ def screenThings():
     screen.fill(GREEN) # clears the stuff off the screen, disable this if you want to see something fun...
     # render things
     
-    screen.blit(plr.img, (round(plr.x), round(plr.y)));
+    
     
     for i in text:
-        for i in i:
-            screen.blit(i["text"], i["pos"])
+        textFrame(i);
+        screen.blit(i.img, (i.x, i.y))
+    if gameState == "game":
+        screen.blit(plr.img, (plr.x, plr.y));
+        for i in enemies:
+            screen.blit(i.img, (i.x, i.y));
+        for i in projectiles:
+            screen.blit(i.img, (i.x, i.y));
+    # show mouse position
+    mpos1 = font.render(str(pygame.mouse.get_pos()[0]) + " " + str(pygame.mouse.get_pos()[1]), False, BLUE)
+    mpos1W = int(mpos1.get_size()[0] / 4);
+    mpos1H = int(mpos1.get_size()[1] / 4);
+    mpos1 = pygame.transform.scale(mpos1, (mpos1W, mpos1H))
+    screen.blit(mpos1, (pygame.mouse.get_pos()[0] + 30, pygame.mouse.get_pos()[1]))
+    pygame.display.flip();
+    
+
+def game():
+        
+    plrFrame();
+    screen.blit(plr.img, (round(plr.x), round(plr.y)));
     
     for i in enemies:
         enemyFrame(i);
-        screen.blit(i.img, (round(i.x),  round(i.y)));
+        screen.blit(i.img, (round(i.x), round(i.y)));
         
-        
-        
-    # show mouse position
-    mpos1 = font.render(str(pygame.mouse.get_pos()[0]) + " " + str(pygame.mouse.get_pos()[1]), False, BLUE)
-    mpos1W = int(mpos1.get_size()[0] / 6);
-    mpos1H = int(mpos1.get_size()[1] / 6);
-    mpos1 = pygame.transform.scale(mpos1, (mpos1W, mpos1H))
-    screen.blit(mpos1, (pygame.mouse.get_pos()[0] + 30, pygame.mouse.get_pos()[1]))
-    #for length of enemies:
-    #screen.blit(enemies[i], enemies[i]but get x)
-    #screen.blit()
-    # update positions?
-    pygame.display.flip();
-
+    for i in projectiles:
+        projFrame(i);
+        screen.blit(i.img, (round(i.x), round(i.y)));
+    
+    
 #this is where we call things, don't assign values / functions below here
 
 makeMenu();
-print(len(text));
-pygame.display.set_caption("Frijoles Con Limon");
+
+pygame.display.set_caption("space invaders go weeee");
 running = True;
 while running:
     
     screenThings();
     clock.tick(FPS);
     
-    plrFrame();
+    mx, my = pygame.mouse.get_pos();
+    
     
     
     
     for event in pygame.event.get():
+        
         if event.type == pygame.QUIT:
             running = False;
+            
         if event.type == pygame.MOUSEBUTTONDOWN:
             print(pygame.mouse.get_pos());
+            mouseD = True;
+            
+        if event.type == pygame.MOUSEBUTTONUP:
+            mouseD = False;
+            
     if gameState == "menu":
         menu();
+        
     if gameState == "game":
-        pass
-    
+        game();
 pygame.quit();
 
 
