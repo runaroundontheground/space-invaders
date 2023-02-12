@@ -27,8 +27,7 @@ def setup(): #make the game ready
 
 setup();
 
-hPT = os.path.exists("D:/programming stuff/") #home path test
-if hPT:
+if os.path.exists("D:/programming stuff/"):
     hP = "D:/programming stuff/space invaders/";
 else:
     hP = "";
