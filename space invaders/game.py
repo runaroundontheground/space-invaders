@@ -25,8 +25,8 @@ KEYDOWN,
 QUIT
 )
 
-
-if os.path.exists("D:/programming stuff/"):
+# this checks for the path to use with stuff cuz it was wierd at my house
+if os.path.exists("D:/programming stuff/space invaders"):
     hP = "D:/programming stuff/space invaders/";
 else:
     hP = "";
@@ -35,19 +35,23 @@ else:
 clock = pygame.time.Clock();
 font = pygame.font.Font(hP + "fonts/PressStart2P-Regular.ttf", 32)
 
+def randnum(s = 1, e = 15):
+    return random.randint(s, e);
 
 #Colors
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
+DARK_GREEN = (1, 50, 32)
 BLUE = (0, 0, 255)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 SPACE_BLUE = (31, 66, 119)
-BGCOLOR = SPACE_BLUE
+BGCOLOR = BLACK
+STARCOLOR = WHITE
 FPS = 60;
 gameState = "menu"; # can be "menu", "game", or "gameover"
 
-sW, sH = 600, 600;
+sW, sH = 800, 600;
 screen = pygame.display.set_mode((sW, sH));
 mouseD = False;
 mx, my = 0, 0;
@@ -62,15 +66,27 @@ PLRBULLET = [pygame.image.load(hP + "images/player bullet.png")];
 ALIEN1 = [pygame.image.load(hP + "images/alien1-1.png"), pygame.image.load(hP + "images/alien1-2.png")];
 #ALIEN2 = pygame.image.load(os.path.join("images", "alien2.png"))
 ALIENDIE = pygame.image.load(hP + "images/alien death.png");
-#MOTHERSHIP = [pygame.image.load(os.path.join(hP + "mothership.png"))];
+MOTHERSHIP = [pygame.image.load(hP + "images/mothership.png")];
+MOTHERSHIPDIE = pygame.image.load(hP + "images/mothership die.png");
+TESTIMG = [pygame.image.load(hP + "images/test.png")];
 
 BLANK = [pygame.image.load(hP + "images/blank.png")];
+
+
+spd = sW / 600; #speed for player
+mxspd = sW / 200; #player max speed
+bspd = 10; #projectile speed
+espd = 3; #enemy speed
+maxBullets = 1;
+lvl = 1;
+
+# star thingys
 
 
 
 class obj:
     
-    def __init__(self, x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 32, h = 32, anim = False):
+    def __init__(self, x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 32, h = 32, anim = False, deathImg = ALIENDIE, animDelay = 5):
         
         self.x = x;
         self.y = y;
@@ -82,22 +98,30 @@ class obj:
         self.h = h;
         self.img = img;
         self.dieDelay = 0;
+        self.deathImg = deathImg;
         self.rect = pygame.rect.Rect(int(self.x), int(self.y), int(self.w), int(self.h));
+        self.anim = anim;
         
         if anim:
+            self.animDelay = animDelay;
+            self.currentAnim = 0;
             for i in img:
                 
                 self.img[i] = pygame.transform.scale(self.img[i], (self.w, self.h));
-                self.img[i].fill(GREEN, self.rect);
+                self.img[i].fill(GREEN, self.rect, 1);
                 
                 
         else:
             
             self.img = self.img[0];
             self.img = pygame.transform.scale(self.img, (self.w, self.h))
-            self.rect.y -= 5
-            self.rect.x -= 5
-            self.img.fill(GREEN, self.rect, 1);
+            self.rect.width = self.w + 50;
+            self.rect.height = self.h;
+            
+            self.rect.x = -50;
+            self.rect.y = 0;
+
+            self.img.fill(self.color, self.rect, 1);
             
             
         
@@ -105,10 +129,17 @@ class obj:
         self.rect = pygame.rect.Rect(int(self.x), int(self.y), int(self.w), int(self.h));
         
     def deathAnim(self):
-        self.img = ALIENDIE;
+        self.img = self.deathImg;
         self.img = pygame.transform.scale(self.img, (int(self.w + (self.w / 3)), int(self.h)));
-        self.img.fill(GREEN, self.rect, 1)
-        self.x -= 3;
+        
+        self.rect.w = self.w + 50;
+        self.rect.x = -50;
+        self.rect.y = 0;
+        
+        
+        self.img.fill(WHITE, self.rect, 1)
+        
+        
         self.dieDelay = 20;
             
             
@@ -131,28 +162,28 @@ def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color 
     text.append(n);
     
 
-def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 32, h = 32):
+def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 32, h = 32, xv = 0, yv = 0, type = "norm", anim = False):
     
     global enemies;
     n = obj(x, y, hp, color, img, w, h);
+    n.type = type;
+    n.xv = xv;
+    n.yv = yv;
     
     
     enemies.append(n);
 
-def createEnemyRow(x = 15, y = 15, count = 8, img = BLANK, color = GREEN):
+def createEnemyRow(x = 15, y = 15, count = 8, img = BLANK, color = GREEN, anim = False):
     
+    global espd
     i = 0;
-    
+    xv = espd;
     while i < count:
-        createEnemy(x, y, img = img, color = color);
-        x += 32;
+        createEnemy(x, y, img = img, color = color, xv = xv, type = "norm", anim = anim);
+        x += 64;
         i += 1;
         
-#mothership things
-"""
-def motherShip(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 32, h = 32):
-    
-"""
+
 
 
 def createProj(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 3, h = 16, dmgT = "plr", yv = -5):
@@ -162,22 +193,40 @@ def createProj(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w =
     n.dmgT = dmgT;
     n.yv = yv;
     
+    
     projectiles.append(n);
+
+def createMShip(x = sW / 2, y = sH / 2, hp = 1.0, color = (0, 150, 0), img = MOTHERSHIP, w = 64, h = 64, deathImg = MOTHERSHIPDIE):
+
+    global enemies
+    n = obj(x, y, hp, color, img, w, h, deathImg = deathImg);
+    n.y = randnum(0, 100);
+
+    if randnum(0,1) == 1:
+        n.x = -n.w;
+        n.xv = 5;
+    else: 
+        n.x = sW;
+        n.xv = -5
+    
+    n.type = "mShip";
+
+
+    enemies.append(n);
+        
+
 
 
 
  
 
-createEnemyRow(img = ALIEN1, color = WHITE)
-createEnemy(img = ALIEN1, color = GREEN);
+createEnemyRow(img = ALIEN1, color = GREEN, anim = True)
+
+
 plr = obj(sW / 2 - 32, sH - 32, 1.0, GREEN, PLAYERSHIP, 32, 32);
 plr.shootDel = 0;
 
-spd = sW / 600; #speed for player
-mxspd = sW / 200; #player max speed
-bspd = 10; #projectile speed
-espd = 3; #enemy speed
-maxBullets = 1;
+
 
 
 
@@ -215,14 +264,13 @@ def plrInput():
     if (not keys[pygame.K_w] and not keys[pygame.K_s]) or (keys[pygame.K_w] and keys[pygame.K_s]) or abs(plr.yv) > mxspd:
         plr.yv -= plr.yv / 5;
 
-    if plr.x < 0: # push player outta the left edge of the screen
-        plr.x = 0;
-        # IDEA!!!!: player loops aint the screen, go off edge and you come out the other side
-        plr.xv = 0.0; # player go bounce
+    if plr.x < -plr.w: # push player outta the left edge of the screen
+        plr.x = sW;
+        #plr.xv = 0.0;
         
     if plr.x > sW - plr.w: # push player outta the right edge of the screen
         plr.x = sW - plr.w;
-        plr.xv = 0.0;
+        
         
     if plr.y > sH - plr.h: # push player outta the bottom edge of the screen
         plr.y = sH - plr.h;
@@ -234,7 +282,7 @@ def plrInput():
         
     if (keys[pygame.K_SPACE] or mouseD) and plr.shootDel == 0: #shoot a bullet if there's not a playr bullet alread on screen
         
-        createProj(plr.x + plr.w/2 - 2.5, plr.y, img = PLRBULLET, dmgT = "plr", yv = -10, color = GREEN);
+        createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = -10, color = WHITE);
         
         plr.shootDel = 50;
 
@@ -257,30 +305,44 @@ def plrFrame():
     plr.rect.x = int(plr.x);
     plr.rect.y = int(plr.y);
     
-    #pygame.draw.line(screen, RED, (plr.x, plr.y), (0, 0), 30); trying to make a laser for aim assistance
+    pygame.draw.line(screen, RED, (plr.x, plr.y), (0, 0), 30); #trying to make a laser for aim assistance
     
     plrInput();
     if plr.shootDel > 0:
         plr.shootDel -= 1;
-
-def enemyMove():
-    enemyLeft = -4
-    enemyRight = 3
-    enemydir = enemyRight
-    for enemies in enemies:
-        enemies.x += enemydir
-        if enemies.x >= 550:
-            enemies.y += 5
-            enemydir = enemyLeft
-        if enemies.x <= 0:
-            enemies.y -= 5
-            enemydir = enemyRight
 
 
 def enemyFrame(self):
     
     self.x += self.xv;
     self.y += self.yv;
+    
+    if self.type == "mShip":
+        if self.x > sW or self.x < -self.w:
+            enemies.remove(self)
+
+    if self.dieDelay == 0 and self.type == "norm":
+        
+        if self.x >= sW - self.w:
+            self.xv = -espd;
+            self.y += randnum(6, lvl + 9)
+            if randnum(1, 1) == 1 and enemies[0] == self:
+                createMShip();
+        if self.x <= 0:
+            self.xv = espd;
+            self.y += randnum(6, lvl + 9);
+            if randnum(1, 1) == 1 and enemies[0] == self:
+                createMShip();
+            
+
+    if self.dieDelay > 0:
+        self.xv, self.yv = 0, 0;
+
+
+
+
+
+
     
     self.rect.x = int(self.x);
     self.rect.y = int(self.y);
@@ -295,6 +357,20 @@ def enemyFrame(self):
     
     # other things gonna happen here
 
+    #mothership things
+
+def mShipFrame():
+    pass
+
+    if enemies.x <= sW or enemies.x >= 5:
+        pass
+        
+    
+
+
+    
+
+
 # collision is already handled by pygame, don't do anything about it for now
 
 def projFrame(self):
@@ -302,8 +378,9 @@ def projFrame(self):
     self.x += self.xv;
     self.y += self.yv;
     
-    self.rect.x = int(self.x);
-    self.rect.y = int(self.y);
+    
+    self.rect.x = 0;
+    self.rect.y = 0;
     if self.y < 0:
         projectiles.remove(self);
     
@@ -365,7 +442,7 @@ def setupGame():
 def screenThings():
     screen.fill(BGCOLOR) # clears the stuff off the screen, disable this if you want to see something fun...
     # render things
-    
+    global enemies, projectiles
     
     
     for i in text:
@@ -374,9 +451,13 @@ def screenThings():
     if gameState == "game":
         screen.blit(plr.img, (int(plr.x), int(plr.y)));
         for i in enemies:
-            screen.blit(i.img, (int(i.x), int(i.y)));
+            if i.anim:
+                screen.blit(i.img[i.currentAnim], (int(i.x), int(i.y)));
+            else:
+                screen.blit(i.img, (int(i.x), int(i.y)));
         for i in projectiles:
             screen.blit(i.img, (int(i.x), int(i.y)));
+            
     # show mouse position
     mpos1 = font.render(str(pygame.mouse.get_pos()[0]) + " " + str(pygame.mouse.get_pos()[1]), False, BLUE)
     mpos1W = int(mpos1.get_size()[0] / 4);
@@ -387,7 +468,7 @@ def screenThings():
     
 
 def game():
-        
+    global enemies, projectiles
     plrFrame();
     
     
