@@ -1,3 +1,4 @@
+
 #Imported items
 import math
 import random
@@ -34,7 +35,7 @@ else:
 # get which path to use cuz programming at home is diff
 clock = pygame.time.Clock();
 font = pygame.font.Font(hP + "fonts/PressStart2P-Regular.ttf", 32)
-
+print(font)
 def randnum(s = 1, e = 15):
     return random.randint(s, e);
 
@@ -69,7 +70,7 @@ ALIENDIE = pygame.image.load(hP + "images/alien death.png");
 MOTHERSHIP = [pygame.image.load(hP + "images/mothership.png")];
 MOTHERSHIPDIE = pygame.image.load(hP + "images/mothership die.png");
 TESTIMG = [pygame.image.load(hP + "images/test.png")];
-
+PLAYERDIE = pygame.image.load(hP + "images/player die1-1.png")
 BLANK = [pygame.image.load(hP + "images/blank.png")];
 
 
@@ -79,9 +80,18 @@ bspd = 10; #projectile speed
 espd = 3; #enemy speed
 maxBullets = 1;
 lvl = 1;
+score = 0;
 
 # star thingys
-
+STARX = 400
+STARY = 300
+# reserved for STARX random.randint(10, sW-10)
+# reserver for STARY random.randint(10, sH-10)
+STAR = pygame.Rect(STARX, STARY, 100, 100)
+def star():
+    pygame.draw.rect(screen, STARCOLOR, STAR)
+    
+star()
 
 
 class obj:
@@ -137,25 +147,29 @@ class obj:
         self.rect.y = 0;
         
         
-        self.img.fill(WHITE, self.rect, 1)
+        self.img.fill(WHITE, self.rect, 1);
         
         
         self.dieDelay = 20;
             
             
 
-def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color = GREEN):
+def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color = GREEN, size = 1):
     
     global text;
     n = obj(x, y, color);
+    n.w = 20;
     n.img = font.render(textVal, False, n.color);
     n.text = textVal;
-    n.w, n.h = font.size(textVal);
+    n.w, n.h = 3, 3;
+    #n.w, n.h = font.size(textVal);
     
     if centered:
         n.x -= n.w / 2;
     
     n.rect.x = int(n.x);
+    n.w = 20;
+    n.h = 20;
     n.rect.w, n.rect.h = n.w, n.h;
     
     
@@ -223,8 +237,9 @@ def createMShip(x = sW / 2, y = sH / 2, hp = 1.0, color = (0, 150, 0), img = MOT
 createEnemyRow(img = ALIEN1, color = GREEN, anim = True)
 
 
-plr = obj(sW / 2 - 32, sH - 32, 1.0, GREEN, PLAYERSHIP, 32, 32);
+plr = obj(sW / 2 - 32, sH - 32, 1.0, GREEN, PLAYERSHIP, 32, 32, deathImg = PLAYERDIE);
 plr.shootDel = 0;
+plr.lives =  3;
 
 
 
@@ -290,9 +305,15 @@ def plrInput():
     
    
    
-   
+#player getting murdered stuff   d
+def collide(r, x = 0, y = 0, useList = False, list = projectiles):
     
-    
+    if useList:
+        for i in list:
+            if pygame.Rect.collidepoint(r, int(i.x), int(i.y)):
+                return True;
+    else:
+        return pygame.Rect.collidepoint(r, x, y);
 
 
         
@@ -307,6 +328,9 @@ def plrFrame():
     
     pygame.draw.line(screen, RED, (plr.x, plr.y), (0, 0), 30); #trying to make a laser for aim assistance
     
+    if collide(plr.rect, useList = True, list = projectiles):
+        pass
+
     plrInput();
     if plr.shootDel > 0:
         plr.shootDel -= 1;
@@ -316,6 +340,10 @@ def enemyFrame(self):
     
     self.x += self.xv;
     self.y += self.yv;
+    
+    if self.type == "norm":
+        if randnum(1, 300) == 1:
+            createProj(self.x + self.w / 2, self.y, img = TESTIMG, dmgT = "enemy", yv = 5);
     
     if self.type == "mShip":
         if self.x > sW or self.x < -self.w:
@@ -333,6 +361,9 @@ def enemyFrame(self):
             self.y += randnum(6, lvl + 9);
             if randnum(1, 1) == 1 and enemies[0] == self:
                 createMShip();
+    
+    if self.y > plr.y:
+        plr.deathAnim();
             
 
     if self.dieDelay > 0:
@@ -340,18 +371,20 @@ def enemyFrame(self):
 
 
 
-
+    
 
 
     
     self.rect.x = int(self.x);
     self.rect.y = int(self.y);
+    
     if self.dieDelay > 1:
         self.dieDelay -= 1;
         if self.dieDelay == 1:
             enemies.remove(self);
     for i in projectiles:
-        if pygame.Rect.collidepoint(self.rect, (int(i.x), int(i.y))) and self.dieDelay == 0:
+        if collide(self.rect, i.x, i.y) and self.dieDelay == 0 and i.dmgT == "plr":
+
             self.deathAnim();
             projectiles.remove(i);
     
@@ -381,12 +414,12 @@ def projFrame(self):
     
     self.rect.x = 0;
     self.rect.y = 0;
-    if self.y < 0:
+    if self.y < 0 or self.y > sH or self.x < 0 or self.x > sW:
         projectiles.remove(self);
     
 def textFrame(self):
     
-    if pygame.Rect.collidepoint(self.rect, (int(mx), int(my))) and self.text == "Start" and mouseD:
+    if collide(self.rect, mx, my) and self.text == "Start" and mouseD:
         setupGame();
         
         
@@ -398,12 +431,11 @@ def makeMenu():
     createText("Start", y = 274);
     
     
-def menu():
-    if mouseD:
-        pass#if mx >
+    
+
     
 def setupGame():
-    global text, gameState;
+    global text, gameState, score;
     text = [];
     
     
@@ -424,17 +456,35 @@ def setupGame():
     time.sleep(0.5);
     text = [];
     
-    
+    createText("Score: " + str(score), y = sH -100, size = 0.3);
     
     gameState = "game";
     
     
 
+def plrDieChecker(self = players):
+    if collide(plr.rect, useList = True, list = enemies):
+        plr.lives -= 1
+        if plr.lives == 0:
+            gameOver()
+    if collide(plr.rect, useList= True, list = projectiles):
+        plr.lives -= 1
+        print("I've Been discombobulated and also beans")
+        if plr.lives == 0:
+            gameOver()
+    if self.y > plr.y:
+        plr.lives -=1
+        if plr.lives == 0:
+            gameOver()
+            
+                
 
 
 
-
-
+def gameOver():
+    createText("Game Over", y = 274)
+    time.sleep(5.0)
+    
 
 
 
@@ -455,6 +505,7 @@ def screenThings():
                 screen.blit(i.img[i.currentAnim], (int(i.x), int(i.y)));
             else:
                 screen.blit(i.img, (int(i.x), int(i.y)));
+            
         for i in projectiles:
             screen.blit(i.img, (int(i.x), int(i.y)));
             
@@ -520,7 +571,7 @@ while running:
             mouseD = False;
             
     if gameState == "menu":
-        menu();
+        pass
         
     if gameState == "game":
         game();
