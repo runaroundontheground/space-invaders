@@ -4,8 +4,9 @@ import random
 import time
 import pygame
 import os
+import threading
 #variables go here
-    
+from threading import Thread
 pygame.font.init();
 pygame.mixer.init();
 pygame.init();
@@ -555,24 +556,11 @@ def setupGame():
     
     gameState = "game";
     
+def createLvl():
     
-
-def plrDieChecker(this = players):
-    if collide(plr.rect, useList = True, list = enemies):
-        plr.lives -= 1
-        if plr.lives == 0:
-            gameOver()
-    if collide(plr.rect, useList= True, list = projectiles):
-        plr.lives -= 1
-        print("I've Been discombobulated and also beans")
-        if plr.lives == 0:
-            gameOver()
-    if this.y > plr.y:
-        plr.lives -=1
-        if plr.lives == 0:
-            gameOver()
-            
-                
+    for i in text:
+        if i.text == "Level " + str(lvl) + "!": text.remove(i); break;
+    
 
 
 
@@ -583,10 +571,12 @@ def gameOver():
 def newLvl():
     global lvl, text, fps;
     lvl += 1;
-    updatingLvl = True;
+    
     createText("Level " + str(lvl) + "!");
-    for i in text:
-        if i.text == "Level " + str(lvl) + "!": text.remove(i);
+    lvlT = threading.Timer(interval = 1, function = createLvl);
+    lvlT.start();
+    
+    
     createEnemyRow(img = ALIEN1, anim = True);
 
 
