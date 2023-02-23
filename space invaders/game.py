@@ -237,6 +237,7 @@ def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w 
     elif (n.type == "mShip"): n.scoreVal = 100;
     else: n.scoreVal = 10;
     n.xv = xv;
+    n.yv = yv;
     
     
     enemies.append(n);
@@ -483,7 +484,7 @@ def enemyFrame(this):
     #mothership things
 
 def mShipFrame(this):
-    if randnum(1, 150) == 1: createEnemy(this.x, this.y, img = ALIEN1, xv = this.xv, yv = 1);
+    if randnum(1, 150) == 1: createEnemy(this.x, this.y, img = ALIEN1, yv = 1);
         
     
 def cameraFrame():
