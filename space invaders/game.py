@@ -204,14 +204,14 @@ class obj:
             
             
 
-def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color = GREEN, size = 1.0):
+def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color = GREEN, size = 1.0, special = "none"):
     
     global text, font;
     n = obj(x, y, color);
     sizing = [size, size];
     n.img = font.render(textVal, False, n.color);
     n.text = textVal;
-    
+    n.special = special;
     n.w, n.h = font.size(textVal);
     
     if centered and x == sW / 2:
@@ -243,12 +243,12 @@ def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w 
 
 def createEnemyRow(x = 15, y = 45, count = 8, img = BLANK, color = GREEN, anim = False, column = [0,0,0]):
     
-    global espd
+    global espd, lvl;
     k = 0;
     j = column;
     xVal = x;
     yVal = y;
-    xv = espd;
+    xv = espd + lvl;
     
     for i in j: #idk how to use for loops in this way any other way
         while k < count:
@@ -439,7 +439,7 @@ def enemyFrame(this):
     this.rect.y = this.y;
     
     if this.type == "norm":
-        if randnum(1, 300 - lvl) == 1:
+        if randnum(1, 300 - lvl * 2) == 1:
             createProj(this.x + this.w / 2, this.y, img = TESTIMG, dmgT = "enemy", yv = 5);
     
     if this.type == "mShip":
@@ -451,9 +451,9 @@ def enemyFrame(this):
         
         if this.x >= sW - this.w or this.x <= 0:
             if this.x >= sW - this.w:
-                this.xv = -espd;
+                this.xv = -espd - lvl;
             if this.x <= 0:
-                this.xv = espd;
+                this.xv = espd + lvl;
             this.y += randnum(6, lvl + 9)
             if randnum(1, 1) == 1 and enemies[0] == this:
                 createMShip();
@@ -556,10 +556,10 @@ def setupGame():
     
     gameState = "game";
     
-def createLvl():
+def rmvLvlText():
     
     for i in text:
-        if i.text == "Level " + str(lvl) + "!": text.remove(i); break;
+        if i.special == "lvl": text.remove(i); break;
     
 
 def setTimeout(function = None, delay = 0.0):
@@ -567,9 +567,8 @@ def setTimeout(function = None, delay = 0.0):
     timer.start();
 
 
-def test():
-    print("beans")
-setTimeout(test, 5);
+
+
 def gameOver():
     createText("Game Over", y = 274)
     time.sleep(5.0)
@@ -578,9 +577,8 @@ def newLvl():
     global lvl, text, fps;
     lvl += 1;
     
-    createText("Level " + str(lvl) + "!");
-    lvlT = threading.Timer(interval = 1, function = createLvl);
-    lvlT.start();
+    createText("Level " + str(lvl) + "!", special = "lvl");
+    setTimeout(rmvLvlText, 1.5);
     
     
     createEnemyRow(img = ALIEN1, anim = True);
