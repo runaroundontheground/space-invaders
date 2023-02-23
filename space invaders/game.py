@@ -562,8 +562,14 @@ def createLvl():
         if i.text == "Level " + str(lvl) + "!": text.remove(i); break;
     
 
+def setTimeout(function = None, delay = 0.0):
+    timer = threading.Timer(interval = delay, function = function)
+    timer.start();
 
 
+def test():
+    print("beans")
+setTimeout(test, 5);
 def gameOver():
     createText("Game Over", y = 274)
     time.sleep(5.0)
