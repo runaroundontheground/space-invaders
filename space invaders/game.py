@@ -431,6 +431,7 @@ def plrFrame():
 def enemyFrame(this):
     
     global score;
+    if (this.type == "mShip"): mShipFrame(this);
     
     this.x += this.xv;
     this.y += this.yv;
@@ -481,11 +482,8 @@ def enemyFrame(this):
 
     #mothership things
 
-def mShipFrame():
-    pass
-
-    if enemies.x <= sW or enemies.x >= 5:
-        pass
+def mShipFrame(this):
+    if randnum(1, 150) == 1: createEnemy(this.x, this.y, img = ALIEN1, xv = this.xv, yv = 1);
         
     
 def cameraFrame():
