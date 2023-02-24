@@ -30,7 +30,7 @@ menuScreen();
 	# When you press start button the game begins
 	#other things: padding, text size, font style (already above), color
 # Settings button
-# Settings have a “Classic Mode” and a “Fun Mode” (If classic mode not finished say not finished)
+# Settings have a “Classic Mode” and a “Fun Mode” (If fun mode not finished say not finished)
 #  exit button
 # When you press exit button stops the code/exits game if it’s an exe
 #def toLoc() - to location

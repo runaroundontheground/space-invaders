@@ -71,14 +71,16 @@ def randnum(s = 1, e = 15):
 #Colors
 RED = (255, 0, 0)
 ORANGE = (255, 120, 0);
+YELLOW = (255, 255, 0)
 GREEN = (0, 255, 0)
 DARK_GREEN = (1, 50, 32)
 BLUE = (0, 0, 255)
+SPACE_BLUE = (31, 66, 119)
+PURPLE = (230, 230, 250)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-SPACE_BLUE = (31, 66, 119)
+
 BGCOLOR = BLACK
-STARCOLOR = WHITE
 fps = 60;
 gameState = "menu"; # can be "menu", "game", or "gameover"
 
@@ -102,17 +104,18 @@ class camera:
         this.shakeStr = 5;
 c = camera();
 
+#images
 PLAYERSHIP = [pygame.image.load(hP + "images/player.png")];
 PLRBULLET = [pygame.image.load(hP + "images/player bullet.png")];
 ALIEN1 = [pygame.image.load(hP + "images/alien1-1.png"), pygame.image.load(hP + "images/alien1-2.png")];
-#ALIEN2 = pygame.image.load(os.path.join("images", "alien2.png"))
+ALIEN2 = [pygame.image.load(hP + "images/alien2-1.png"), pygame.image.load(hP + "images/alien2-2.png")];
 ALIENDIE = pygame.image.load(hP + "images/alien death.png");
 MOTHERSHIP = [pygame.image.load(hP + "images/mothership1-1.png"), pygame.image.load(hP + "images/mothership1-2.png")];
 MOTHERSHIPDIE = pygame.image.load(hP + "images/mothership die.png");
 TESTIMG = [pygame.image.load(hP + "images/test.png")];
 PLAYERDIE = pygame.image.load(hP + "images/player die1-1.png")
 BLANK = [pygame.image.load(hP + "images/blank.png")];
-
+STARS = [pygame.image.load(hP + "images/bg.png")]
 
 spd = sW / 600; #speed for player
 mxspd = sW / 200; #player max speed
@@ -122,16 +125,12 @@ maxBullets = 1;
 lvl = 1;
 score = 0;
 
-# star thingys
-STARX = 400
-STARY = 300
-# reserved for STARX random.randint(10, sW-10)
-# reserver for STARY random.randint(10, sH-10)
-STAR = pygame.Rect(STARX, STARY, 100, 100)
-def star():
-    pygame.draw.rect(screen, STARCOLOR, STAR)
-    
-star();
+
+
+#blocks
+
+
+
 
 
 class obj:
@@ -299,9 +298,19 @@ def createMShip(x = sW / 2, y = sH / 2, hp = 1.0, color = (0, 150, 0), img = MOT
 
 
 
-
+def makeBG():
+    randC = WHITE;
+    global bg1, bg2;
+    if randnum(1, 5) == 1: randC = WHITE;
+    if randnum(1, 5) == 2: randC = ORANGE;
+    if randnum(1, 5) == 3: randC = GREEN;
+    if randnum(1, 5) == 4: randC = YELLOW;
+    if randnum(1, 5) == 5: randC = PURPLE;
+    bg1 = obj(color = randC, img = STARS, w = sW, h = sH + 200, x = 0, y = -200);
+    bg2 = obj(color = randC, img = STARS, w = sW, h = sH + 200, x = 0, y = bg1.y - (sH + 200));
+    
  
-
+makeBG();
 
 
 
@@ -317,15 +326,15 @@ plr.lives =  3;
 def plrInput():
     
     #player movement
-    global sW, sH, spd, bspd, mxspd, opmode;
+    global sW, sH, spd, bspd, mxspd, opmode, fps;
     keys = pygame.key.get_pressed();
 
 
 
     # fun shooty mode:
-    if keys[pygame.K_t]:
-        opmode = True;
+    if keys[pygame.K_t]: opmode = True;
         
+    
         
     if keys[pygame.K_d] and plr.x < sW: #go right
         if plr.xv < mxspd:
@@ -421,13 +430,21 @@ def plrFrame():
     for i in projectiles:
         if collide(plr.rect, i.x, i.y) and i.dmgT == "enemy":
             plr.deathAnim();
+    if plr.dead and plr.dieDelay == 0:
+        if not plr.w == 0:
+            tempW = plr.w# we need to define revivePlayer later
+            tempH = plr.h
+            setTimeout(revivePlayer, 5.0);
+        plr.w = 0;
+        plr.h = 0;
     
-
-    plrInput();
+    if not plr.dead: plrInput();
+    else: plr.xv = 0; plr.yv = 0;
     
     if plr.shootDel > 0:
         plr.shootDel -= 1;
-
+    if plr.dieDelay > 0: plr.dieDelay -= 1;
+    if plr.dieDelay > 10: plr.dieDelay = 9;
 
 def enemyFrame(this):
     
@@ -517,7 +534,11 @@ def textFrame(this):
     if collide(this.rect, mx, my) and this.text == "Start" and mouseD:
         setupGame();
         
-        
+def bgFrame():
+    bg1.y += 1;
+    bg2.y += 1;
+    if bg1.y >= sH: bg1.y = -bg1.h;
+    if bg2.y >= sH: bg2.y = -bg2.h;
 
 # create the menu's text
 def makeMenu():
@@ -552,6 +573,7 @@ def setupGame():
     text = [];
     
     createText("Score: ", x = 10, y = 10, size = 0.5);
+    createText("Lives: ", x = 10, y = 30, size = 0.5);
     
     gameState = "game";
     
@@ -569,8 +591,19 @@ def setTimeout(function = None, delay = 0.0):
 
 
 def gameOver():
-    createText("Game Over", y = 274)
-    time.sleep(5.0)
+    global gameState;
+    if gameState == "game":
+        gameState = "game over";
+        createText("Game Over", y = 274)
+        setTimeout(createText("Try Again?", y = 160, special = "gameOver"), 2.0);
+        setTimeout(createText("yeh", y = 160, special = "restart"), 2.0);
+        setTimeout(createText("nah", y = 160, special = "give up"), 2.0);
+    if mouseD:
+        for i in text:
+            if i.special == "restart" and collide(i.rect, mx, my): print("test"); break;
+            if i.special == "give up" and collide(i.rect, mx, my): print("testing"); break
+
+    
     
 def newLvl():
     global lvl, text, fps;
@@ -587,21 +620,27 @@ def newLvl():
 def screenThings():
     screen.fill(BGCOLOR) # clears the stuff off the screen, disable this if you want to see something fun...
     # render things
-    global enemies, projectiles
-    
+    global enemies, projectiles, plr;
+    screen.blit(bg1.img, (0, bg1.y));
+    screen.blit(bg2.img, (0, bg2.y));
+    bgFrame();
     cameraFrame();
-    
+   
     for i in text:
         textFrame(i);
         screen.blit(i.img, (int(i.x + c.shakeX), int(i.y + c.shakeY)))
     if gameState == "game":
         screen.blit(plr.img, (int(plr.x + c.shakeX), int(plr.y + c.shakeY)));
-        pygame.draw.line(screen, (50,50,50), (plr.x + plr.w / 2 + c.shakeX, plr.y + 7 + c.shakeY), (plr.x + plr.w / 2 + c.shakeX, 0));
-        scorespot = 0;
+        if not plr.dead: pygame.draw.line(screen, (50,50,50), (plr.x + plr.w / 2 + c.shakeX, plr.y + 7 + c.shakeY), (plr.x + plr.w / 2 + c.shakeX, 0));
+        spot = 0;
         for i in str(score):
-            screen.blit(num[int(i)], (107 + scorespot, 10));
+            screen.blit(num[int(i)], (107 + spot + c.shakeX, 10 + c.shakeY));
             thingy = font.size(num[int(i) + 10]);
-            scorespot += thingy[0] / 2;
+            spot += thingy[0] / 2;
+        for i in str(plr.lives):
+            screen.blit(num[int(i)], (107 + spot + c.shakeX, 30 + c.shakeY));
+            thingy = font.size(num[int(i) + 10]);
+            spot += thingy[0] / 2;
         
         for i in enemies:
             
@@ -698,6 +737,8 @@ while running:
         
     if gameState == "game":
         game();
+    if gameState == "game over":
+        gameOver();
 pygame.quit();
 
 
