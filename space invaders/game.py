@@ -30,8 +30,9 @@ pygame.init();
 # this checks for the path to use with stuff cuz it was wierd at my house
 if os.path.exists("D:/programming stuff/space invaders"):
     hP = "D:/programming stuff/space invaders/";
-else:
-    hP = "";
+elif os.path.exists("C:/space invaders/"):
+    hP = "C:/space invaders/";
+else: hP = "";
 
 # get which path to use cuz programming at home is diff
 clock = pygame.time.Clock();
@@ -137,8 +138,8 @@ class obj:
     
     def __init__(this, x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 32, h = 32, anim = False, deathImg = ALIENDIE, animDelay = 10):
         
-        this.x = x;
-        this.y = y;
+        this.x = int(x);
+        this.y = int(y);
         this.xv = 0.0;
         this.yv = 0.0;
         this.hp = hp;
@@ -153,6 +154,7 @@ class obj:
         this.dead = False;
         this.rect.x, this.rect.y = 0, 0;
         this.angle = 0;
+        this.visible = True;
         
         
         if anim:
@@ -192,7 +194,7 @@ class obj:
         
         this.rect.x = 0;
         this.rect.y = 0;
-        this.rect.width = this.w + this.w / 3;
+        this.rect.width = this.w;
         this.rect.height = this.h;
         
         
@@ -213,14 +215,14 @@ def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color 
     n.special = special;
     n.w, n.h = font.size(textVal);
     
-    if centered and x == sW / 2:
-        n.x -= n.w / 2;
+    
     
     n.rect.x = int(n.x);
     n.rect.y = int(n.y);
     
     n.img = pygame.transform.scale(n.img, (n.w * sizing[0], n.h * sizing[1]));
-    
+    if centered and x == sW / 2:
+        n.x -= n.w / 2;
     n.rect.width, n.rect.height = n.w, n.h;
     
     
@@ -315,6 +317,8 @@ makeBG();
 
 
 plr = obj(sW / 2 - 32, sH - 32, 1.0, GREEN, PLAYERSHIP, 32, 32, deathImg = PLAYERDIE);
+plr.tempW = plr.w;
+plr.tempH = plr.h;
 plr.shootDel = 0;
 plr.shootCount = 1;
 plr.lives =  3;
@@ -333,18 +337,18 @@ def plrInput():
 
     # fun shooty mode:
     if keys[pygame.K_t]: opmode = True;
-        
+    if keys[pygame.K_p]: plrDie();
     
         
-    if keys[pygame.K_d] and plr.x < sW: #go right
+    if keys[pygame.K_d]: #go right
         if plr.xv < mxspd:
             plr.xv += spd;
 
-    if keys[pygame.K_a] and plr.x > -plr.w: #go left
+    if keys[pygame.K_a]: #go left
        if plr.xv > -mxspd:
         plr.xv -= spd;
     
-    if keys[pygame.K_w] and plr.y > sH - 50: # go up
+    if keys[pygame.K_w] and plr.y > 0: # go up
         if plr.yv > -mxspd:
             plr.yv -= spd;
             
@@ -358,19 +362,18 @@ def plrInput():
     if (not keys[pygame.K_w] and not keys[pygame.K_s]) or (keys[pygame.K_w] and keys[pygame.K_s]) or abs(plr.yv) > mxspd:
         plr.yv -= plr.yv / 5;
 
-    if plr.x < -plr.w: # push player outta the left edge of the screen
+    if plr.x < -50: # loop player to right edge of screen when hitting left edge
         plr.x = sW;
-        #plr.xv = 0.0;
         
-    if plr.x > sW - plr.w: # push player outta the right edge of the screen
-        plr.x = sW - plr.w;
+    if plr.x > sW + 50: # loop player to left edge of screen when hitting right edge
+        plr.x = -plr.w;
         
         
     if plr.y > sH - plr.h: # push player outta the bottom edge of the screen
         plr.y = sH - plr.h;
         plr.yv = 0.0;
     
-    if plr.y < sH - 50: # push player outta the top limit of ur movement
+    if plr.y < 0: # push player outta the top limit of ur movement
         plr.y = sH - 50;
         plr.yv = 0.0;
         
@@ -393,10 +396,16 @@ def plrInput():
         plr.shootDel = 50 - randnum(0, 10);
         plr.shootCount += 1;
         c.shakeTime = 3;
+        randVal1 = 5;
+        randVal2 = 5;
         if opmode:
             plr.shootDel = 5;
-            createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = tempVel, color = tempColor, xv = 2);
-            createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = tempVel, color = tempColor, xv = -2);
+            createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = randnum(-randVal1,randVal2), color = tempColor, xv = randnum(-randVal1,randVal2));
+            createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = randnum(-randVal1,randVal2), color = tempColor, xv = randnum(-randVal1,randVal2));
+            createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = randnum(-randVal1,randVal2), color = tempColor, xv = randnum(-randVal1,randVal2));
+            createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = randnum(-randVal1,randVal2), color = tempColor, xv = randnum(-randVal1,randVal2));
+            createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = randnum(-randVal1,randVal2), color = tempColor, xv = randnum(-randVal1,randVal2));
+            createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = randnum(-randVal1,randVal2), color = tempColor, xv = randnum(-randVal1,randVal2));
         
 
     
@@ -413,11 +422,36 @@ def collide(r, x = 0, y = 0, useList = False, list = projectiles):
     else:
         return pygame.Rect.collidepoint(r, x, y);
 
+def revivePlayer():
+    plr.visible = False;
+    plr.dead = False;
+    plr.w = plr.tempW;
+    plr.h = plr.tempH;
+    plr.x = int(sW / 2);
+    plr.y = sH - 100;
+    plr.img = PLAYERSHIP[0];
+    plr.img = pygame.transform.scale(plr.img, (plr.w, plr.h));
 
-        
+    plr.rect.x = 0;
+    plr.rect.y = 0;
+    plr.rect.width = plr.w;
+    plr.rect.height = plr.h;
+    plr.img.fill(plr.color, plr.rect, 1);
+    plr.dieDelay = fps * -2;
+    plr.visible = True;
     
+
+
+def plrDie():
+    if not plr.w == 0:
+        if plr.lives > 0: plr.lives -= 1;
+        if plr.lives >= 1: setTimeout(revivePlayer, 2);
+        if plr.lives <= 0: gameOver();
+    plr.w = 0;
+    plr.h = 0;
+
 def plrFrame():
-    
+    global score;
     
     plr.x += plr.xv;
     plr.y += plr.yv;
@@ -425,18 +459,15 @@ def plrFrame():
     plr.rect.x = int(plr.x);
     plr.rect.y = int(plr.y);
     
-    
-    
-    for i in projectiles:
-        if collide(plr.rect, i.x, i.y) and i.dmgT == "enemy":
-            plr.deathAnim();
-    if plr.dead and plr.dieDelay == 0:
-        if not plr.w == 0:
-            tempW = plr.w# we need to define revivePlayer later
-            tempH = plr.h
-            setTimeout(revivePlayer, 5.0);
-        plr.w = 0;
-        plr.h = 0;
+    if score > 2000:
+        plr.lives += 1;
+        score -= 2000;
+    if not plr.dieDelay < 0:
+        for i in projectiles:
+            if collide(plr.rect, i.x, i.y) and i.dmgT == "enemy":
+                plr.deathAnim();
+        if plr.dead and plr.dieDelay == 0:
+            plrDie();
     
     if not plr.dead: plrInput();
     else: plr.xv = 0; plr.yv = 0;
@@ -445,6 +476,7 @@ def plrFrame():
         plr.shootDel -= 1;
     if plr.dieDelay > 0: plr.dieDelay -= 1;
     if plr.dieDelay > 10: plr.dieDelay = 9;
+    if plr.dieDelay < 0: plr.dieDelay += 1; print(plr.dieDelay)
 
 def enemyFrame(this):
     
@@ -467,7 +499,7 @@ def enemyFrame(this):
             
 
     if not this.dead and this.type == "norm":
-        
+        if this.y > sH or this.y < 0: enemies.remove(this);
         if this.x >= sW - this.w or this.x <= 0:
             if this.x >= sW - this.w:
                 this.xv = -espd - lvl;
@@ -477,8 +509,10 @@ def enemyFrame(this):
             if randnum(1, 1) == 1 and enemies[0] == this:
                 createMShip();
     
-    if this.y > plr.y:
+    if collide(this.rect, plr.x, plr.y):
         plr.deathAnim();
+        plrDie();
+        
             
 
     if this.dead:
@@ -501,7 +535,9 @@ def enemyFrame(this):
     #mothership things
 
 def mShipFrame(this):
-    if randnum(1, 150) == 1: createEnemy(this.x, this.y, img = ALIEN1, yv = 1);
+    if randnum(1, 150) == 1: 
+        tV = randnum(1, 5);
+        createEnemy(this.x, this.y, img = ALIEN1, xv = this.xv, yv = tV);
         
     
 def cameraFrame():
@@ -528,7 +564,11 @@ def projFrame(this):
     
     if this.y < 0 or this.y > sH or this.x < 0 or this.x > sW:
         projectiles.remove(this);
-    
+    for i in projectiles:
+        if not i == this:
+            if not i.dmgT == this.dmgT:
+                if collide(i.rect, this.x, this.y): projectiles.remove(i); projectiles.remove(this);
+
 def textFrame(this):
     
     if collide(this.rect, mx, my) and this.text == "Start" and mouseD:
@@ -546,13 +586,30 @@ def makeMenu():
     createText("Space Invaders", y = 100);
     createText("Start", y = 274);
     
-    
-    
+def powerUps(this):
+    # on enemy death, call this
+    randomNum = randnum(1,5);
+    if randomNum == 1:
+        pass
+    if randomNum == 2:
+        pass
+    if randomNum == 3:
+        pass
+    if randomNum == 4:
+        pass
+    if randomNum == 5:
+        pass
+
 
     
 def setupGame():
-    global text, gameState, score;
+    global text, gameState, score, enemies, projectiles, lvl;
     text = [];
+    enemies = [];
+    projectiles = [];
+    plr.lives = 3;
+    lvl = 1;
+    revivePlayer();
     
     createEnemyRow(img = ALIEN1, anim = True);
     i = 3;
@@ -583,25 +640,32 @@ def rmvLvlText():
         if i.special == "lvl": text.remove(i); break;
     
 
-def setTimeout(function = None, delay = 0.0):
-    timer = threading.Timer(interval = delay, function = function)
+def setTimeout(function = None, delay = 0.0, arg = ()):
+    timer = threading.Timer(interval = float(delay), function = function, args = arg);
     timer.start();
 
 
 
+    
+
 
 def gameOver():
-    global gameState;
+    global gameState, enemies, mouseD;
+    enemies = [];
     if gameState == "game":
         gameState = "game over";
-        createText("Game Over", y = 274)
-        setTimeout(createText("Try Again?", y = 160, special = "gameOver"), 2.0);
-        setTimeout(createText("yeh", y = 160, special = "restart"), 2.0);
-        setTimeout(createText("nah", y = 160, special = "give up"), 2.0);
+        createText("Game Over", y = 160)
+        
+        setTimeout(createText, 2, ("Try Again?", sW / 2, 220, True, GREEN, 1, "gameOver"));
+        setTimeout(createText, 2, ("Yeh", sW / 2 - 150, 300, True, GREEN, 0.7, "restart"));
+        setTimeout(createText, 2, ("Nah", sW / 2 + 75, 300, True, GREEN, 0.7, "give up"));
     if mouseD:
         for i in text:
-            if i.special == "restart" and collide(i.rect, mx, my): print("test"); break;
-            if i.special == "give up" and collide(i.rect, mx, my): print("testing"); break
+            if gameState == "game over":
+                if i.special == "restart" and collide(i.rect, mx, my): setupGame(); break;
+                if i.special == "give up" and collide(i.rect, mx, my): pygame.quit(); break;
+            else:
+                break;
 
     
     
@@ -625,48 +689,49 @@ def screenThings():
     screen.blit(bg2.img, (0, bg2.y));
     bgFrame();
     cameraFrame();
-   
+    
     for i in text:
         textFrame(i);
         screen.blit(i.img, (int(i.x + c.shakeX), int(i.y + c.shakeY)))
     if gameState == "game":
-        screen.blit(plr.img, (int(plr.x + c.shakeX), int(plr.y + c.shakeY)));
+        if plr.visible: screen.blit(plr.img, (int(plr.x + c.shakeX), int(plr.y + c.shakeY)));
         if not plr.dead: pygame.draw.line(screen, (50,50,50), (plr.x + plr.w / 2 + c.shakeX, plr.y + 7 + c.shakeY), (plr.x + plr.w / 2 + c.shakeX, 0));
         spot = 0;
         for i in str(score):
             screen.blit(num[int(i)], (107 + spot + c.shakeX, 10 + c.shakeY));
             thingy = font.size(num[int(i) + 10]);
             spot += thingy[0] / 2;
+        spot = 0;
         for i in str(plr.lives):
             screen.blit(num[int(i)], (107 + spot + c.shakeX, 30 + c.shakeY));
             thingy = font.size(num[int(i) + 10]);
             spot += thingy[0] / 2;
         
         for i in enemies:
-            
-            if i.anim:
-                if (not i.dead): image = i.img[i.currentAnim];
-                else: image = i.img;
-                i.rect.x = 0;
-                i.rect.y = 0;
-                i.rect.w = i.w;
-                i.rect.h = i.h;
-                image = pygame.transform.scale(image, (i.w, i.h));
-                image.fill(i.color, i.rect, 1);
-                
-                
-                screen.blit(image, (int(i.x + c.shakeX), int(i.y + c.shakeY)));
-                if (i.animDel > 0): i.animDel -= 1;
-                if (i.animDel == 0):
-                    i.animDel = i.animDelay;
-                    i.currentAnim += 1;
-                    if (i.currentAnim == i.maxAnim): i.currentAnim = 0;
+            if i.visible:
+                if i.anim:
+                    if (not i.dead): image = i.img[i.currentAnim];
+                    else: image = i.img;
+                    i.rect.x = 0;
+                    i.rect.y = 0;
+                    i.rect.w = i.w;
+                    i.rect.h = i.h;
+                    image = pygame.transform.scale(image, (i.w, i.h));
+                    image.fill(i.color, i.rect, 1);
                     
-            else:
-                screen.blit(i.img, (int(i.x), int(i.y)));
+                    
+                    screen.blit(image, (int(i.x + c.shakeX), int(i.y + c.shakeY)));
+                    if (i.animDel > 0): i.animDel -= 1;
+                    if (i.animDel == 0):
+                        i.animDel = i.animDelay;
+                        i.currentAnim += 1;
+                        if (i.currentAnim == i.maxAnim): i.currentAnim = 0;
+                        
+                else:
+                    screen.blit(i.img, (int(i.x), int(i.y)));
             
         for i in projectiles:
-            screen.blit(i.img, (int(i.x), int(i.y)));
+            if i.visible: screen.blit(i.img, (int(i.x), int(i.y)));
             
     # show mouse position
     mpos = font.render(str(pygame.mouse.get_pos()[0]) + " " + str(pygame.mouse.get_pos()[1]), False, BLUE)
@@ -683,7 +748,7 @@ def game():
     plrFrame();
     
     
-    if (len(enemies) == 0 and not updatingLvl): newLvl();
+    if (len(enemies) == 0 and not updatingLvl and not plr.dead): newLvl();
     
     for i in enemies:
         if not updatingLvl: enemyFrame(i);
@@ -732,9 +797,7 @@ while running:
         if event.type == pygame.MOUSEBUTTONUP:
             mouseD = False;
             
-    if gameState == "menu":
-        pass
-        
+
     if gameState == "game":
         game();
     if gameState == "game over":
