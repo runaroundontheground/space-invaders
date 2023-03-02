@@ -11,7 +11,10 @@ pygame.font.init();
 pygame.mixer.init();
 pygame.init();
 
+# sounds
 
+HEAVYSHOT = pygame.mixer.Sound("sounds/heavy shot.wav");
+GETSHOTGUN = pygame.mixer.Sound("sounds/get shotgun.wav");
 
 #debugRect = pygame.Rect(); this'll do something later
 
@@ -39,7 +42,7 @@ clock = pygame.time.Clock();
 font = pygame.font.Font(hP + "fonts/PressStart2P-Regular.ttf", 32);
 def numbererer(text):
     tempthing = font.render(text, False, (0, 255, 0));
-    tempthing = pygame.transform.scale(tempthing, (font.size(text)[0] / 2, font.size(text)[1] / 2))
+    tempthing = pygame.transform.scale(tempthing, (int(font.size(text)[0] / 2), int(font.size(text)[1] / 2)));
     return tempthing;
 
 num = [
@@ -69,7 +72,24 @@ num = [
 def randnum(s = 1, e = 15):
     return random.randint(s, e);
 
+
+
 #Colors
+rainbow_counter = 0
+rainTrue = True
+def rainbow():
+    r = randnum(0, 255)
+    g = randnum(0, 255)
+    b = randnum(0, 255)
+    return (r, g, b)
+
+if rainTrue == True:
+    rainbow_counter += 1
+    if rainbow_counter > 5:
+        RAINBOW = rainbow()
+        rainbow_counter = 0
+
+RAINBOW = rainbow()
 RED = (255, 0, 0)
 ORANGE = (255, 120, 0);
 YELLOW = (255, 255, 0)
@@ -80,7 +100,7 @@ SPACE_BLUE = (31, 66, 119)
 PURPLE = (230, 230, 250)
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-
+LIGHT_BLUE = (3, 107, 252)
 BGCOLOR = BLACK
 fps = 60;
 gameState = "menu"; # can be "menu", "game", or "gameover"
@@ -104,7 +124,7 @@ class camera:
         this.shakeTime = 0;
         this.shakeStr = 5;
 c = camera();
-
+ 
 #images
 PLAYERSHIP = [pygame.image.load(hP + "images/player.png")];
 PLRBULLET = [pygame.image.load(hP + "images/player bullet.png")];
@@ -266,15 +286,17 @@ def createEnemyRow(x = 15, y = 45, count = 8, img = BLANK, color = GREEN, anim =
 
 
 
-def createProj(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 3, h = 16, dmgT = "plr", yv = -5, xv = 0):
+def createProj(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 3, h = 16, dmgT = "plr", yv = -5, xv = 0, pierce = False, powerUp = False):
     
     global projectiles;
     n = obj(x, y , hp, color, img, w, h);
     n.dmgT = dmgT;
     n.yv = yv;
     n.xv = xv;
+    n.pierce = pierce;
     n.rect.height += 50;
     n.img.fill(n.color, None);
+    n.powerUp = powerUp;
     
     projectiles.append(n);
 
@@ -321,8 +343,14 @@ plr.tempW = plr.w;
 plr.tempH = plr.h;
 plr.shootDel = 0;
 plr.shootCount = 1;
-plr.lives =  3;
+plr.lives = 3;
+plr.scoreNeed = 2000;
 
+plr.laser = False;
+plr.laserAmmo = 10;
+
+plr.shotgun = False;
+plr.shotgunAmmo = 20;
 
 
 
@@ -338,6 +366,8 @@ def plrInput():
     # fun shooty mode:
     if keys[pygame.K_t]: opmode = True;
     if keys[pygame.K_p]: plrDie();
+    if keys[pygame.K_i] and not plr.laser: plr.laser = True; plr.shotgun = False; plr.laserAmmo = 10;
+    if keys[pygame.K_u] and not plr.shotgun: plr.shotgun = True; plr.laser = False; plr.shotgunAmmo = 20; pygame.mixer.Sound.play(GETSHOTGUN);
     
         
     if keys[pygame.K_d]: #go right
@@ -391,11 +421,30 @@ def plrInput():
             tempVel = -30;
             tempColor = ORANGE;
             c.shakeStr = 8;
-        createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = tempVel, color = tempColor);
         
-        plr.shootDel = 50 - randnum(0, 10);
-        plr.shootCount += 1;
+        if plr.laser and plr.laserAmmo > 0: 
+            createProj(x = plr.x + plr.w/2, y = plr.y - 200, img = TESTIMG, dmgT = "plr", yv = -30, color = RED, h = 200, pierce = True);
+            plr.shootDel = 60;
+            c.shakeStr = 30;
+            plr.laserAmmo -= 1;
+            pygame.mixer.Sound.play(HEAVYSHOT);
+        elif plr.shotgun and plr.shotgunAmmo > 0:
+            tempColor = YELLOW;
+            tempVel = -15;
+            createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "plr", xv = -1, yv = tempVel + 1, color = tempColor);
+            createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "plr", yv = tempVel, color = tempColor);
+            createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "plr", xv = 1, yv = tempVel + 1, color = tempColor);
+            plr.shootDel = 30;
+            c.shakeStr = 10;
+            c.shakeTime = 5;
+            plr.shotgunAmmo -= 1;
+        else:
+            createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = tempVel, color = tempColor);
+            plr.shootDel = 50 - randnum(0, 10)
+            c.shakeStr = 5;
+            
         c.shakeTime = 3;
+        plr.shootCount += 1;
         randVal1 = 5;
         randVal2 = 5;
         if opmode:
@@ -459,13 +508,17 @@ def plrFrame():
     plr.rect.x = int(plr.x);
     plr.rect.y = int(plr.y);
     
-    if score > 2000:
+    if score > plr.scoreNeed:
         plr.lives += 1;
-        score -= 2000;
+        plr.scoreNeed += 2000;
     if not plr.dieDelay < 0:
         for i in projectiles:
-            if collide(plr.rect, i.x, i.y) and i.dmgT == "enemy":
-                plr.deathAnim();
+            if collide(i.rect, plr.x, plr.y): # run things when projectile
+                if i.dmgT == "enemy": plr.deathAnim();
+                if i.powerUp:
+                    if i.dmgT == "laser": plr.laser = True; plr.laserAmmo = 10; plr.shotgun = False;
+                    if i.dmgT == "shotgun": plr.shotgun = True; plr.shotgunAmmo = 20; plr.laser = False; pygame.mixer.Sound.play(GETSHOTGUN);
+                    projectiles.remove(i);
         if plr.dead and plr.dieDelay == 0:
             plrDie();
     
@@ -509,9 +562,10 @@ def enemyFrame(this):
             if randnum(1, 1) == 1 and enemies[0] == this:
                 createMShip();
     
-    if collide(this.rect, plr.x, plr.y):
+    if collide(this.rect, plr.x + plr.w/2, plr.y + plr.h/2):
         plr.deathAnim();
         plrDie();
+        print("kill player");
         
             
 
@@ -528,7 +582,8 @@ def enemyFrame(this):
         if collide(this.rect, i.x, i.y) and this.dieDelay == 0 and i.dmgT == "plr":
             score += this.scoreVal;
             this.deathAnim();
-            if not opmode: projectiles.remove(i);
+            if randnum(1, 5) == 1: powerUps(this);
+            if not opmode and not i.pierce: projectiles.remove(i);
     
     # other things gonna happen here
 
@@ -543,8 +598,8 @@ def mShipFrame(this):
 def cameraFrame():
     if (c.shakeTime > 0): 
         c.shakeTime -= 1;
-        c.shakeX += randnum(0,c.shakeStr);
-        c.shakeY += randnum(0,c.shakeStr);
+        c.shakeX += randnum(-c.shakeStr,c.shakeStr);
+        c.shakeY += randnum(-c.shakeStr,c.shakeStr);
     
     if (c.shakeTime == 0):
         c.shakeX -= round(c.shakeX / 5);
@@ -562,12 +617,14 @@ def projFrame(this):
     this.rect.x = this.x;
     this.rect.y = this.y;
     
-    if this.y < 0 or this.y > sH or this.x < 0 or this.x > sW:
+    if this.y + this.h < 0 or this.y > sH or this.x < 0 or this.x > sW:
         projectiles.remove(this);
     for i in projectiles:
-        if not i == this:
+        if not i == this and not this.powerUp and not i.powerUp:
             if not i.dmgT == this.dmgT:
-                if collide(i.rect, this.x, this.y): projectiles.remove(i); projectiles.remove(this);
+                if collide(i.rect, this.x, this.y):
+                    if not this.pierce: projectiles.remove(this);
+                    if not i.pierce: projectiles.remove(i);
 
 def textFrame(this):
     
@@ -588,17 +645,18 @@ def makeMenu():
     
 def powerUps(this):
     # on enemy death, call this
+    
     randomNum = randnum(1,5);
     if randomNum == 1:
-        pass
+        createProj(this.x, this.y, color = BLUE, img = TESTIMG, w = 50, h = 50, dmgT = "laser", yv = 2, powerUp = True);
     if randomNum == 2:
-        pass
+        createProj(this.x, this.y, color = GREEN, img = TESTIMG, w = 50, h = 50, dmgT = "life", yv = 2, powerUp = True);
     if randomNum == 3:
-        pass
+        createProj(this.x, this.y, color = rainbow(), img = TESTIMG, w = 50, h = 50, dmgT = "shotgun", yv = 2, powerUp = True);
     if randomNum == 4:
-        pass
+        createProj(this.x, this.y, color = ORANGE, img = TESTIMG, w = 50, h = 50, dmgT = "grenade", yv = 2, powerUp = True);
     if randomNum == 5:
-        pass
+        createProj(this.x, this.y, color = PURPLE, img = TESTIMG, w = 50, h = 50, dmgT = "smg", yv = 2, powerUp = True);
 
 
     
@@ -608,6 +666,7 @@ def setupGame():
     enemies = [];
     projectiles = [];
     plr.lives = 3;
+    plr.scoreNeed = 2000;
     lvl = 1;
     revivePlayer();
     
@@ -616,7 +675,7 @@ def setupGame():
     while i > 0:
         screen.fill(BGCOLOR);
         createText(str(i), y = sH / 2 - 20);
-        screen.blit(text[0].img, (int(text[0].x), int(text[0].y)));
+        screen.blit(text[0].img, (int(text[0].x + c.shakeX), int(text[0].y + c.shakeY)));
         pygame.display.update();
         time.sleep(0.5);
         text = [];
@@ -624,7 +683,7 @@ def setupGame():
         i -= 1;
     screen.fill(BGCOLOR);
     createText("Start!", y = sH / 2 - 20)
-    screen.blit(text[0].img, (int(text[0].x), int(text[0].y)), special_flags = 0);
+    screen.blit(text[0].img, (int(text[0].x + c.shakeX), int(text[0].y + c.shakeY)), special_flags = 0);
     pygame.display.update();
     time.sleep(0.5);
     text = [];
@@ -726,12 +785,12 @@ def screenThings():
                         i.animDel = i.animDelay;
                         i.currentAnim += 1;
                         if (i.currentAnim == i.maxAnim): i.currentAnim = 0;
-                        
+                         
                 else:
-                    screen.blit(i.img, (int(i.x), int(i.y)));
+                    screen.blit(i.img, (int(i.x + c.shakeX), int(i.y + c.shakeY)));
             
         for i in projectiles:
-            if i.visible: screen.blit(i.img, (int(i.x), int(i.y)));
+            if i.visible: screen.blit(i.img, (int(i.x + c.shakeX), int(i.y + c.shakeY)));
             
     # show mouse position
     mpos = font.render(str(pygame.mouse.get_pos()[0]) + " " + str(pygame.mouse.get_pos()[1]), False, BLUE)
@@ -781,7 +840,6 @@ while running:
     clock.tick(fps);
     
     mx, my = pygame.mouse.get_pos();
-    
     
     
     
