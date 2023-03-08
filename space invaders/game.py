@@ -72,8 +72,9 @@ num = [
 ];
 
 
-def randnum(s = 1, e = 15):
-    return random.randint(s, e);
+def randnum(s = 1, e = 15, float = False):
+    if not float: return random.randint(s, e);
+    if float: return random.uniform(s, e);
 
 
 
@@ -106,7 +107,7 @@ BLACK = (0, 0, 0)
 LIGHT_BLUE = (3, 107, 252)
 GRAY = (50, 50, 50);
 BGCOLOR = BLACK
-fps = 60;
+fps = 58;
 gameState = "menu"; # can be "menu", "game", or "gameover"
 
 sW, sH = 800, 600;
@@ -119,6 +120,7 @@ updatingLvl = False;
 projectiles = [];
 players = []; # multiplayer, if we have time
 enemies = [];
+blocks = [];
 text = [];
 
 class camera:
@@ -229,15 +231,23 @@ class obj:
 
 
     def kaplooey(this, deathDist = 100):
-        for i in projectiles:
-            if dist(this, i) < deathDist:
-                projectiles.remove(i);
+        
         if dist(this, plr) < deathDist:
             plr.deathAnim();
             plrDie();
         for i in enemies:
             if dist(this, i) < deathDist:
                 i.deathAnim();
+        for i in projectiles:
+            if not i == this:
+                if dist(this, i) < deathDist:
+                    projectiles.remove(i);
+        this.kaboomed = True;
+        this.kaboomW = deathDist;
+        this.xv = 0;
+        this.yv = 0;
+        
+            
         
             
             
@@ -266,6 +276,34 @@ def createText(textVal = "none", x = sW / 2, y = sH / 2, centered = True, color 
     text.append(n);
     
 
+def createBlock(x = sW / 2, y = sH / 2, hp = 5.0, color = GREEN, img = TESTIMG, w = 16, h = 16):
+    global blocks;
+    n = obj(x,y,hp,color,img,w,h);
+    blocks.append(n);
+    
+def createBlocks(x = sW/2, y = sH/2, hp = 5.0, img = TESTIMG, color = GREEN, amount = [5, 2], w = 16, h = 16):
+
+     
+    i = 0; l = amount[1]; # get num of columns
+    i2 = 0; l2 = amount[0]; # get length of rows
+    while i < l:
+
+        while i2 < l2: # make the row
+            tempX = int(x + i2*w);
+            tempY = int(y + i*h);
+            createBlock(x = tempX, y = tempY, hp = hp, color = color, img = img, w = w, h = h);
+            i2 += 1;
+        i2 = 0;
+        i += 1;
+        
+    
+    
+
+createBlocks(x = sW/4 - 32, y = 372);
+createBlocks(x = sW/4*2 - 32, y = 372);
+createBlocks(x = sW/4*3 - 32, y = 372);
+
+
 def createEnemy(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w = 32, h = 32, xv = 0, yv = 0, type = "norm", anim = False):
     
     global enemies;
@@ -291,7 +329,9 @@ def createEnemyRow(x = 15, y = 45, count = 8, img = BLANK, color = GREEN, anim =
     
     for i in j: #idk how to use for loops in this way any other way
         while k < count:
-            createEnemy(xVal, yVal, img = img, color = color, xv = xv, type = "norm", anim = anim);
+            if randnum(0,1) == 1: tempImg = ALIEN1;
+            else: tempImg = ALIEN2;
+            createEnemy(xVal, yVal, img = tempImg, color = color, xv = xv, type = "norm", anim = anim);
             xVal += 64;
             k += 1;
         
@@ -314,6 +354,7 @@ def createProj(x = sW / 2, y = sH / 2, hp = 1.0, color = GREEN, img = BLANK, w =
     n.rect.height += 50;
     n.img.fill(n.color, None);
     n.powerUp = powerUp;
+    if n.dmgT == "grenade": n.fuse = 100; n.boomTime = 10; n.kaboomed = False;
     
     projectiles.append(n);
 
@@ -355,7 +396,7 @@ makeBG();
 
 
 
-plr = obj(sW / 2 - 32, sH - 32, 1.0, GREEN, PLAYERSHIP, 32, 32, deathImg = PLAYERDIE);
+plr = obj(sW / 2 - 32, sH - 32, 1.0, GREEN, PLAYERSHIP, 32, 25, deathImg = PLAYERDIE);
 plr.tempW = plr.w;
 plr.tempH = plr.h;
 plr.shootDel = 0;
@@ -373,10 +414,10 @@ plr.shotgun = False;
 plr.shotgunAmmo = 20;
 
 plr.smg = False;
-plr.smgAmmo = 20;
+plr.smgAmmo = 15;
 
-plr.grenade = False;
 plr.grenades = 3;
+plr.grenadeCD = 0;
 
 
 
@@ -395,7 +436,7 @@ def plrInput():
     if keys[pygame.K_i] and not plr.laser: plr.laser = True; plr.shotgun = False; plr.smg = False; plr.laserAmmo = 10;
     if keys[pygame.K_u] and not plr.shotgun: plr.shotgun = True; plr.laser = False; plr.smg = False; plr.shotgunAmmo = 10; pygame.mixer.Sound.play(GETSHOTGUN);
     if keys[pygame.K_o] and not plr.smg: plr.smg = True; plr.laser = False; plr.shotgun = False; plr.smgAmmo = 30;
-    if keys[pygame.K_g] and not plr.grenade: plr.grenade = True;
+    if keys[pygame.K_g] and plr.grenades < 3: plr.grenades = 3;
         # set player gre3ndesa to 3, removing other weapons \deosn't need to happen
     if keys[pygame.K_d]: #go right
         if plr.xv < mxspd:
@@ -434,10 +475,17 @@ def plrInput():
         plr.y = sH - 50;
         plr.yv = 0.0;
         # fire attack
-    if keys[pygame.K_g] and plr.grenades > 0 and plr.grenadeCD == 0: 
-        createProj(x = plr.x+plr.w/2, y = plr.y+plr.h/2, img = TESTIMG, yv = -10, color = YELLOW);
-        plr.grenades -= 1;
-        plr.grenadeCD = 100;
+    if keys[pygame.K_q] and plr.grenades > 0 and plr.grenadeCD == 0:
+            tempColor = ORANGE;
+            
+            tempVel = -15;
+            
+            createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "grenade", yv = tempVel + 1, color = tempColor, w = 5, h = 5)
+            plr.grenades -= 1;
+            plr.grenadeCD = 65;
+            c.shakeStr = 10;
+            c.shakeTime = 5;
+
     if plr.laserShoot: plr.laserShoot = False;
     if (keys[pygame.K_SPACE] or mouseD) and plr.shootDel == 0: #shoot a bullet if there's not a playr bullet alread on screen
         if (plr.shootCount >= 3): 
@@ -466,7 +514,7 @@ def plrInput():
             tempVel = -15;
             createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "plr", xv = -2, yv = tempVel + 1, color = tempColor);
             createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "plr", xv = -1, yv = tempVel + 1, color = tempColor);
-            #middle
+             # middle
             createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "plr", yv = tempVel, color = tempColor);
 
             createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "plr", xv = 1, yv = tempVel + 1, color = tempColor);
@@ -480,26 +528,20 @@ def plrInput():
         elif plr.smg and plr.smgAmmo > 0:
             tempColor = PURPLE;
             tempVel = -15;
-            createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "plr", xv = 1, yv = tempVel + 1, color = tempColor);
-            c.shakeStr = 10;
-            c.shakeTime = 3;
-            plr.shootDel = 10;
-            plr.smgAmmo -= 1
-            pygame.mixer.Sound.play(SMG);
+            def smgthing():
+                pygame.mixer.Sound.play(SMG);
+                createProj(plr.x + plr.w/2-3, plr.y-16, color = tempColor, img = TESTIMG, dmgT = "plr", yv = tempVel, xv = randnum(.5, -.5, True));
+                c.shakeStr = 10;
+                c.shakeTime = 3;
+            setTimeout(smgthing, 0.1);
+            setTimeout(smgthing, 0.2);
+            setTimeout(smgthing, 0.3);
+            
+            plr.shootDel = 50;
+            plr.smgAmmo -= 3;
+            
             if plr.smgAmmo == 0: pygame.mixer.Sound.play(AMMOOUT); plr.smg = False;
-        elif plr.grenade and plr.grenades > 0:
-            tempColor = ORANGE;
-            
-            tempVel = -15;
-            
-            createProj(x = plr.x + plr.w/2 - 3, y = plr.y - 16, img = TESTIMG, dmgT = "grenade", xv = 1, yv = tempVel + 1, color = tempColor)
-                
-            plr.shootDel = 65;
-            c.shakeStr = 10;
-            c.shakeTime = 5;
-            plr.grenadeAmmo -= 1;
-            if plr.grenadeAmmo == 0: pygame.mixer.Sound.play(AMMOOUT); plr.grenade = False;
-            
+        
         else:
             createProj(x = plr.x + plr.w/2 - 2.5, y = plr.y, img = TESTIMG, dmgT = "plr", yv = tempVel, color = tempColor);
             plr.shootDel = 50 - randnum(0, 10)
@@ -563,17 +605,19 @@ def plrFrame():
     plr.x += plr.xv;
     plr.y += plr.yv;
     
-    plr.laserX1 = plr.x + plr.w/2;
-    plr.laserY1 = plr.y + 3;
+    plr.laserX1 = plr.x + plr.w/2 + c.shakeX;
+    plr.laserY1 = plr.y + 3 + c.shakeY;
     if plr.laser:
-        plr.laserX2 = mx;
-        plr.laserY2 = my;
-    else: plr.laserX2 = plr.laserX1; plr.laserY2 = 0;
+        plr.laserX2 = mx + c.shakeX;
+        plr.laserY2 = my + c.shakeY;
+    else: plr.laserX2 = plr.laserX1; plr.laserY2 = c.shakeY;
     if plr.laserShoot: plr.laserColor = RED;
     else: plr.laserColor = GRAY;
     
     plr.rect.x = int(plr.x);
     plr.rect.y = int(plr.y);
+    plr.rect.width = plr.w;
+    plr.rect.height = plr.h;
     
     if score > plr.scoreNeed:
         plr.lives += 1;
@@ -586,6 +630,8 @@ def plrFrame():
                     if i.dmgT == "laser": plr.laser = True; plr.laserAmmo = 10; plr.shotgun = False; plr.smg = False;
                     if i.dmgT == "shotgun": plr.shotgun = True; plr.shotgunAmmo = 10; plr.laser = False; plr.smg = False; pygame.mixer.Sound.play(GETSHOTGUN);
                     if i.dmgT == "smg": plr.smg = True; plr.shotgun = False; plr.laser = False;
+                    if i.dmgT == "life": plr.lives += 1;
+                    if i.dmgT == "grenade": plr.grenades += 1;
                     projectiles.remove(i);
         if plr.dead and plr.dieDelay == 0:
             plrDie();
@@ -600,6 +646,10 @@ def plrFrame():
     if plr.dieDelay > 10: plr.dieDelay = 9;
     if plr.dieDelay < 0: plr.dieDelay += 1; print(plr.dieDelay)
 
+def blockFrame(this):
+    pass
+
+
 def enemyFrame(this):
     
     global score;
@@ -610,6 +660,8 @@ def enemyFrame(this):
     
     this.rect.x = this.x;
     this.rect.y = this.y;
+    this.rect.width = this.w;
+    this.rect.height = this.h;
     
     if this.type == "norm":
         if randnum(1, 300 - lvl * 2) == 1:
@@ -618,8 +670,9 @@ def enemyFrame(this):
     if this.type == "mShip":
         if this.x > sW or this.x < -this.w:
             enemies.remove(this)
-            
-
+    
+       
+    
     if not this.dead and this.type == "norm":
         if this.y > sH or this.y < 0: enemies.remove(this);
         if this.x >= sW - this.w or this.x <= 0:
@@ -628,6 +681,7 @@ def enemyFrame(this):
             if this.x <= 0:
                 this.xv = espd + lvl;
             this.y += randnum(6, lvl + 9)
+            
             if randnum(1, 1) == 1 and enemies[0] == this:
                 createMShip();
     
@@ -653,11 +707,12 @@ def enemyFrame(this):
             score += this.scoreVal;
             if randnum(1,5) == 1: powerUps(this);
     for i in projectiles:
-        if collide(this.rect, i.rect) and this.dieDelay == 0 and i.dmgT == "plr":
-            score += this.scoreVal;
-            this.deathAnim();
-            if randnum(1, 10) == 1: powerUps(this);
-            if not opmode and not i.pierce: projectiles.remove(i);
+        if not i.dmgT == "grenade":
+            if collide(this.rect, i.rect) and this.dieDelay == 0 and i.dmgT == "plr":
+                score += this.scoreVal;
+                this.deathAnim();
+                if randnum(1, 10) == 1: powerUps(this);
+                if not opmode and not i.pierce: projectiles.remove(i);
     
     # other things gonna happen here
 
@@ -683,36 +738,60 @@ def cameraFrame():
 
 # collision is already handled by pygame, don't do anything about it for now
 
-def projFrame(this):
-    
-    this.x += this.xv;
-    this.y += this.yv;
-    
-    this.rect.x = this.x;
-    this.rect.y = this.y;
-    
-    if this.dmgT == "grenade":
-        if this.yv < 0:
-            this.yv -= this.yv / 5;
-        if collide(this.rect, plr.rect) and this.yv > -3:
-            plr.deathAnim();
-            plrDie();
-            this.kaplooey();
-        for i in enemies:
-            if collide(this.rect, i.rect):
-                this.kaplooey();
-        for i in projectiles:
-            if collide(this.rect, i.rect):
-                this.kaplooey();
+def projFrame(this, index):
+    if index < len(projectiles):
+        this.x += this.xv;
+        this.y += this.yv;
+        
+        this.rect.x = this.x;
+        this.rect.y = this.y;
+        this.rect.width = this.w;
+        this.rect.height = this.h;
+        
+        if this.dmgT == "grenade" and not this.powerUp:
+            if this.fuse > 0: this.fuse -= 1;
+            else: this.kaplooey();
+            print(this.fuse)
+            if this.yv < 0:
+                this.yv -= this.yv / 20;
+            if this.yv > 0:
+                if collide(this.rect, plr.rect):
+                    plr.deathAnim();
+                    plrDie();
+                    this.kaplooey();
+            for i in enemies:
+                if collide(this.rect, i.rect):
+                    this.kaplooey();
+            for i in projectiles:
+                if not i == this:
+                    if collide(this.rect, i.rect):
+                        this.kaplooey();
+            if this.kaboomed: 
+                if this.boomTime > 0:
+                    this.boomTime -= 1;
+                    if this.boomTime <= 9 and this.boomTime > 5: pygame.draw.circle(screen, WHITE, (this.x+this.w/2, this.y+this.h/2), this.kaboomW);
+                    if this.boomTime <= 5 and this.boomTime > 2: pygame.draw.circle(screen, ORANGE, (this.x+this.w/2, this.y+this.h/2), this.kaboomW);
+                    if this.boomTime <= 2: pygame.draw.circle(screen, YELLOW, (this.x+this.w/2, this.y+this.h/2), this.kaboomW);
+                if this.boomTime == 0: projectiles.remove(this);
+                
 
-    if this.y + this.h < 0 or this.y > sH or this.x < 0 or this.x > sW:
-        projectiles.remove(this);
-    for i in projectiles:
-        if not i == this and not this.powerUp and not i.powerUp:
-            if not i.dmgT == this.dmgT:
-                if collide(i.rect, this.rect):
-                    if not this.pierce: projectiles.remove(this);
-                    if not i.pierce: projectiles.remove(i);
+        if this.y + this.h < 0 or this.y > sH or this.x < 0 or this.x > sW:
+            projectiles.remove(this);
+
+        for i in projectiles:
+
+            if not i == this and not this.powerUp and not i.powerUp:
+
+                if not i.dmgT == this.dmgT:
+
+                    if collide(i.rect, this.rect):
+
+                        if not this.pierce: projectiles.remove(this);
+                        if not i.pierce: projectiles.remove(i);
+        for i in blocks:
+            if blocks.index(i) < len(blocks):
+                if collide(this.rect, i.rect):
+                    if index < len(projectiles): projectiles.remove(this);
 
 def textFrame(this):
     
@@ -738,7 +817,9 @@ def powerUps(this):
     if randomNum == 1:
         createProj(this.x, this.y, color = BLUE, img = TESTIMG, w = 50, h = 50, dmgT = "laser", yv = 2, powerUp = True);
     if randomNum == 2:
-        createProj(this.x, this.y, color = GREEN, img = TESTIMG, w = 50, h = 50, dmgT = "life", yv = 2, powerUp = True);
+        randomNum2 = randnum(1,3)
+        if randomNum2 == 3:
+            createProj(this.x, this.y, color = GREEN, img = TESTIMG, w = 50, h = 50, dmgT = "life", yv = 2, powerUp = True);
     if randomNum == 3:
         createProj(this.x, this.y, color = RED, img = TESTIMG, w = 50, h = 50, dmgT = "shotgun", yv = 2, powerUp = True);
     if randomNum == 4:
@@ -879,6 +960,8 @@ def screenThings():
             
         for i in projectiles:
             if i.visible: screen.blit(i.img, (int(i.x + c.shakeX), int(i.y + c.shakeY)));
+        for i in blocks:
+            if i.visible: screen.blit(i.img, (int(i.x + c.shakeX), int(i.y + c.shakeY)));
             
     # show mouse position
     mpos = font.render(str(mx) + " " + str(my), False, BLUE)
@@ -892,16 +975,14 @@ def screenThings():
 def game():
     global enemies, projectiles
     plrFrame();
-    
-    
     if (len(enemies) == 0 and not updatingLvl and not plr.dead): newLvl();
     
     for i in enemies:
         if not updatingLvl: enemyFrame(i);
-        
-        
     for i in projectiles:
-        projFrame(i);
+        projFrame(i, projectiles.index(i));
+    for i in blocks:
+        blockFrame(i);
         
     
     
